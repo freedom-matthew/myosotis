@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT question, answer FROM cards ORDER BY id",
+  "describe": {
+    "columns": [
+      {
+        "name": "question",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "answer",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "answer"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "53af9e05756eb188cd648c8d26877317a671036cd8c4be3ce114fb7048e6abce"
+}

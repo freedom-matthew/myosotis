@@ -1,0 +1,15 @@
+[package]
+name = "myosotis-app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+myosotis-core = { path = "../core" }
+sqlx = { version = "0.9.0", default-features = false, features = ["runtime-tokio", "sqlite", "macros", "migrate"] }
+tauri = { version = "2", features = [] }
+
+[dev-dependencies]
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
