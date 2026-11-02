@@ -1,6 +1,8 @@
 pub mod features;
 pub mod storage;
 
+use std::path::PathBuf;
+
 use tauri::Manager;
 
 use crate::storage::SqliteCardRepo;
@@ -9,9 +11,9 @@ use crate::storage::SqliteCardRepo;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            let data_dir = app.path().app_data_dir()?;
+            let data_dir: PathBuf = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
-            let repo = tauri::async_runtime::block_on(SqliteCardRepo::open(
+            let repo: SqliteCardRepo = tauri::async_runtime::block_on(SqliteCardRepo::open(
                 &data_dir.join("myosotis.db"),
             ))?;
             app.manage(repo);

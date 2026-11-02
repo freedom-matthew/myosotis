@@ -3,7 +3,7 @@
 
 	type Card = { question: string; answer: string };
 
-	const cards = invoke<Card[]>('list_cards');
+	const cards: Promise<Card[]> = invoke<Card[]>('list_cards');
 </script>
 
 <h1>Myosotis</h1>

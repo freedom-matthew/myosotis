@@ -12,10 +12,10 @@ pub struct SqliteCardRepo {
 impl SqliteCardRepo {
     /// Opens (or creates) the database file and brings its schema up to date.
     pub async fn open(path: &Path) -> Result<Self, RepoError> {
-        let options = SqliteConnectOptions::new()
+        let options: SqliteConnectOptions = SqliteConnectOptions::new()
             .filename(path)
             .create_if_missing(true);
-        let pool = SqlitePool::connect_with(options)
+        let pool: SqlitePool = SqlitePool::connect_with(options)
             .await
             .map_err(repo_error)?;
         Self::migrated(pool).await
@@ -24,7 +24,7 @@ impl SqliteCardRepo {
     /// Fresh, empty database that lives only as long as the repo. Meant for tests.
     pub async fn in_memory() -> Result<Self, RepoError> {
         // Every connection to `:memory:` is its own database, so keep exactly one, forever.
-        let pool = SqlitePoolOptions::new()
+        let pool: SqlitePool = SqlitePoolOptions::new()
             .max_connections(1)
             .idle_timeout(None)
             .max_lifetime(None)

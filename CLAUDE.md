@@ -38,6 +38,10 @@ Rules:
 - Store all times in UTC. API key lives in the OS keyring, never in SQLite or files.
 - Don't add new dependencies without asking first.
 
+## Code style
+- Always annotate the type of every variable binding, even where it can be inferred: `let cards: Vec<Card> = ...` in Rust, `const cards: Promise<Card[]> = ...` in TypeScript. I want to read types in the code, not rely on IDE hints.
+- Never annotate closure parameters (`|error| ...`, not `|error: RepoError| ...`); it makes them unreadable.
+
 ## Svelte
 Svelte 5 with runes only (`$state`, `$derived`, `$effect`, `$props`). Never use Svelte 4 syntax (`export let`, `$:`, stores for local state).
 
