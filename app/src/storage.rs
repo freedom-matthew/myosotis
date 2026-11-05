@@ -4,9 +4,9 @@ use std::str::FromStr;
 
 use chrono::{DateTime, SecondsFormat, Utc};
 use myosotis_core::{
-    Card, CardId, CardRepo, Depth, DraftCard, DueCard, GeneratedCard, GenerationRequest, Grade,
-    ImportId, ImportRepo, ImportStatus, InboxImport, NewImport, Phase, RecentImport, RepoError,
-    ReviewRepo, Schedule,
+    Card, CardId, CardRepo, Depth, DraftCard, DueCard, ExplanationRequest, GeneratedCard,
+    GenerationRequest, Grade, ImportId, ImportRepo, ImportStatus, InboxImport, LibraryRepo,
+    NewImport, Phase, RecentImport, RepoError, ReviewRepo, Schedule, StoredCard,
 };
 use sqlx::SqlitePool;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteTransaction};
@@ -117,7 +117,7 @@ impl ReviewRepo for SqliteCardRepo {
                FROM cards c
                LEFT JOIN origins o
                  ON o.id = (SELECT MIN(id) FROM origins WHERE card_id = c.id)
-               WHERE c.status = 'active' AND c.due <= ?
+               WHERE c.status = 'active' AND c.suspended = 0 AND c.due <= ?
                ORDER BY c.due, c.id"#,
             until
         )
@@ -271,6 +271,21 @@ impl ReviewRepo for SqliteCardRepo {
         transaction.commit().await.map_err(repo_error)
     }
 
+    async fn explanation_request(&self, card: CardId) -> Result<ExplanationRequest, RepoError> {
+        sqlx::query_as!(
+            ExplanationRequest,
+            r#"SELECT c.question, c.answer, o.excerpt AS "excerpt?"
+               FROM cards c
+               LEFT JOIN origins o
+                 ON o.id = (SELECT MIN(id) FROM origins WHERE card_id = c.id)
+               WHERE c.id = ?"#,
+            card
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(repo_error)
+    }
+
     async fn update_card(&self, card: CardId, content: &Card) -> Result<(), RepoError> {
         sqlx::query!(
             "UPDATE cards SET question = ?, answer = ? WHERE id = ? AND status = 'active'",
@@ -286,7 +301,7 @@ impl ReviewRepo for SqliteCardRepo {
 
     async fn all_due_dates(&self) -> Result<Vec<DateTime<Utc>>, RepoError> {
         let rows: Vec<String> =
-            sqlx::query_scalar!("SELECT due FROM cards WHERE status = 'active'")
+            sqlx::query_scalar!("SELECT due FROM cards WHERE status = 'active' AND suspended = 0")
                 .fetch_all(&self.pool)
                 .await
                 .map_err(repo_error)?;
@@ -322,6 +337,78 @@ async fn save_schedule(
     .await
     .map_err(repo_error)?;
     Ok(())
+}
+
+impl LibraryRepo for SqliteCardRepo {
+    async fn all_cards(&self) -> Result<Vec<StoredCard>, RepoError> {
+        let rows = sqlx::query!(
+            r#"SELECT c.id AS "id!", c.question, c.answer, c.due, c.stability, c.difficulty,
+                      c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,
+                      c.suspended AS "suspended: bool",
+                      o.source_title AS "source_title?", o.excerpt AS "excerpt?",
+                      (SELECT COUNT(*) FROM reviews r WHERE r.card_id = c.id)
+                          AS "review_count!: i64"
+               FROM cards c
+               LEFT JOIN origins o
+                 ON o.id = (SELECT MIN(id) FROM origins WHERE card_id = c.id)
+               WHERE c.status = 'active'
+               ORDER BY c.id DESC"#
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(repo_error)?;
+
+        rows.into_iter()
+            .map(|row| {
+                Ok(StoredCard {
+                    due: DueCard {
+                        id: row.id,
+                        card: Card::new(row.question, row.answer),
+                        source_title: row.source_title,
+                        excerpt: row.excerpt,
+                        schedule: Schedule {
+                            due: from_db(&row.due)?,
+                            stability: row.stability,
+                            difficulty: row.difficulty,
+                            elapsed_days: row.elapsed_days,
+                            scheduled_days: row.scheduled_days,
+                            reps: row.reps as i32,
+                            lapses: row.lapses as i32,
+                            phase: Phase::parse(&row.phase),
+                            last_review: from_db(&row.last_review)?,
+                        },
+                    },
+                    suspended: row.suspended,
+                    review_count: row.review_count,
+                })
+            })
+            .collect()
+    }
+
+    async fn set_suspended(&self, card: CardId, suspended: bool) -> Result<(), RepoError> {
+        sqlx::query!(
+            "UPDATE cards SET suspended = ? WHERE id = ? AND status = 'active'",
+            suspended,
+            card
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(repo_error)?;
+        Ok(())
+    }
+
+    async fn delete_card(&self, card: CardId) -> Result<(), RepoError> {
+        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
+        sqlx::query!("DELETE FROM reviews WHERE card_id = ?", card)
+            .execute(&mut *transaction)
+            .await
+            .map_err(repo_error)?;
+        sqlx::query!("DELETE FROM cards WHERE id = ? AND status = 'active'", card)
+            .execute(&mut *transaction)
+            .await
+            .map_err(repo_error)?;
+        transaction.commit().await.map_err(repo_error)
+    }
 }
 
 impl ImportRepo for SqliteCardRepo {

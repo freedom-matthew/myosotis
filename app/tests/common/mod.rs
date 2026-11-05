@@ -1,12 +1,14 @@
 //! Small helpers so the acceptance tests read like requirements.
 #![allow(dead_code)]
 
+use std::sync::Mutex;
+
 use chrono::{DateTime, Duration, TimeZone, Utc};
 use myosotis_app::features::{import_source, inbox, review};
 use myosotis_app::storage::SqliteCardRepo;
 use myosotis_core::{
-    Card, CardGenerator, Depth, DraftCard, GenerateError, GeneratedCard, GenerationRequest, Grade,
-    ImportId, InboxImport, NewImport, SessionCard,
+    Card, CardExplainer, CardGenerator, Depth, DraftCard, ExplanationRequest, GenerateError,
+    GeneratedCard, GenerationRequest, Grade, ImportId, InboxImport, NewImport, SessionCard,
 };
 
 /// Monday morning. Every test starts here, so nothing depends on the real clock.
@@ -79,6 +81,39 @@ impl CardGenerator for FakeGenerator {
         &self,
         _request: &GenerationRequest,
     ) -> Result<Vec<GeneratedCard>, GenerateError> {
+        self.result.clone()
+    }
+}
+
+/// Stands in for the AI when explaining: remembers what it was asked.
+pub struct FakeExplainer {
+    result: Result<String, GenerateError>,
+    requests: Mutex<Vec<ExplanationRequest>>,
+}
+
+impl FakeExplainer {
+    pub fn replying(text: &str) -> Self {
+        Self {
+            result: Ok(text.to_string()),
+            requests: Mutex::new(Vec::new()),
+        }
+    }
+
+    pub fn failing_with(message: &str) -> Self {
+        Self {
+            result: Err(GenerateError(message.to_string())),
+            requests: Mutex::new(Vec::new()),
+        }
+    }
+
+    pub fn last_request(&self) -> ExplanationRequest {
+        self.requests.lock().unwrap().last().unwrap().clone()
+    }
+}
+
+impl CardExplainer for FakeExplainer {
+    async fn explain(&self, request: &ExplanationRequest) -> Result<String, GenerateError> {
+        self.requests.lock().unwrap().push(request.clone());
         self.result.clone()
     }
 }

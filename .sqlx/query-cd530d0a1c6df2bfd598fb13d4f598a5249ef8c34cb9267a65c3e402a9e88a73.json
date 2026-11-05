@@ -1,0 +1,182 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"id!\", c.question, c.answer, c.due, c.stability, c.difficulty,\n                      c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,\n                      o.source_title AS \"source_title?\", o.excerpt AS \"excerpt?\"\n               FROM cards c\n               LEFT JOIN origins o\n                 ON o.id = (SELECT MIN(id) FROM origins WHERE card_id = c.id)\n               WHERE c.status = 'active' AND c.suspended = 0 AND c.due <= ?\n               ORDER BY c.due, c.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "question",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "answer",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "answer"
+          }
+        }
+      },
+      {
+        "name": "due",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "due"
+          }
+        }
+      },
+      {
+        "name": "stability",
+        "ordinal": 4,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "stability"
+          }
+        }
+      },
+      {
+        "name": "difficulty",
+        "ordinal": 5,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "difficulty"
+          }
+        }
+      },
+      {
+        "name": "elapsed_days",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "elapsed_days"
+          }
+        }
+      },
+      {
+        "name": "scheduled_days",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "scheduled_days"
+          }
+        }
+      },
+      {
+        "name": "reps",
+        "ordinal": 8,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "reps"
+          }
+        }
+      },
+      {
+        "name": "lapses",
+        "ordinal": 9,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "lapses"
+          }
+        }
+      },
+      {
+        "name": "phase",
+        "ordinal": 10,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "phase"
+          }
+        }
+      },
+      {
+        "name": "last_review",
+        "ordinal": 11,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "last_review"
+          }
+        }
+      },
+      {
+        "name": "source_title?",
+        "ordinal": 12,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origins",
+            "name": "source_title"
+          }
+        }
+      },
+      {
+        "name": "excerpt?",
+        "ordinal": 13,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origins",
+            "name": "excerpt"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "cd530d0a1c6df2bfd598fb13d4f598a5249ef8c34cb9267a65c3e402a9e88a73"
+}

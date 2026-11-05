@@ -3,6 +3,7 @@
 	import { FileText, Undo2, X } from '@lucide/svelte';
 	import {
 		editCard,
+		explainCard,
 		gradeCard,
 		reviewSession,
 		undoGrade,
@@ -14,6 +15,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Kbd } from '#lib/components/ui/kbd/index.js';
 	import { Progress } from '#lib/components/ui/progress/index.js';
+	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { isTyping } from '#lib/keys.js';
 	import { cn } from '#lib/utils.js';
@@ -33,6 +35,8 @@
 	let saving: boolean = $state(false);
 	let error: string | null = $state(null);
 	let gradedCards: number[] = $state([]);
+	let explanation: string | null = $state(null);
+	let explaining: boolean = $state(false);
 	let editing: boolean = $state(false);
 	let editQuestion: string = $state('');
 	let editAnswer: string = $state('');
@@ -44,6 +48,8 @@
 		queue = await reviewSession();
 		revealed = false;
 		showContext = false;
+		explanation = null;
+		explaining = false;
 		loaded = true;
 	}
 
@@ -84,6 +90,24 @@
 		saving = false;
 	}
 
+	async function explain(): Promise<void> {
+		if (!card || explaining) return;
+		if (explanation !== null) {
+			explanation = null;
+			return;
+		}
+		const asked: number = card.id;
+		explaining = true;
+		error = null;
+		try {
+			const text: string = await explainCard(asked);
+			if (card?.id === asked) explanation = text;
+		} catch (reason) {
+			error = String(reason);
+		}
+		if (card?.id === asked) explaining = false;
+	}
+
 	function startEditing(): void {
 		if (!card) return;
 		editQuestion = card.question;
@@ -120,6 +144,7 @@
 			if (card) revealed = true;
 		} else if (revealed && card) {
 			if (event.key === 'c' && card.excerpt) showContext = !showContext;
+			if (event.key === 'x') explain();
 			if (event.key === 'e') {
 				event.preventDefault();
 				startEditing();
@@ -189,6 +214,18 @@
 						<p class="font-serif text-xl leading-normal text-pretty text-card-answer">
 							{card.answer}
 						</p>
+						{#if explaining}
+							<div class="flex flex-col gap-2 rounded-lg bg-muted px-4 py-3.5">
+								<span class="text-xs font-medium text-muted-foreground">Explanation</span>
+								<Skeleton class="h-4 w-full" />
+								<Skeleton class="h-4 w-2/3" />
+							</div>
+						{:else if explanation !== null}
+							<div class="flex animate-reveal flex-col gap-1.5 rounded-lg bg-muted px-4 py-3.5">
+								<span class="text-xs font-medium text-muted-foreground">Explanation</span>
+								<p class="text-sm leading-normal text-card-answer">{explanation}</p>
+							</div>
+						{/if}
 						{#if showContext && card.excerpt}
 							<div class="flex animate-reveal flex-col gap-1.5 rounded-lg border bg-secondary px-4 py-3.5">
 								<span class="text-xs font-medium text-muted-foreground">
@@ -198,6 +235,15 @@
 							</div>
 						{/if}
 						<div class="-ml-2.5 flex gap-1">
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={explain}
+								disabled={explaining}
+								class="gap-1.5 text-xs text-foreground-secondary"
+							>
+								Explain <span class="font-mono text-muted-foreground">X</span>
+							</Button>
 							<Button
 								variant="ghost"
 								size="sm"

@@ -2,9 +2,9 @@ mod common;
 
 use chrono::{DateTime, Utc};
 use common::*;
-use myosotis_app::features::review;
+use myosotis_app::features::{inbox, review};
 use myosotis_app::storage::SqliteCardRepo;
-use myosotis_core::{Grade, SessionCard};
+use myosotis_core::{DraftCard, ExplanationRequest, GenerateError, Grade, SessionCard};
 
 #[tokio::test]
 async fn a_new_card_is_ready_to_review() {
@@ -208,4 +208,43 @@ async fn editing_a_card_during_review_keeps_its_progress() {
     assert_eq!(after[0].question, "Better question");
     assert_eq!(after[0].answer, "Better answer");
     assert_eq!(after[0].grades, before[0].grades);
+}
+
+#[tokio::test]
+async fn an_explanation_is_based_on_the_card_and_its_source() {
+    // given a card that came from a source
+    let repo: SqliteCardRepo = empty_collection().await;
+    import_source_with(&repo, &FakeGenerator::producing(&["Cue?"])).await;
+    let drafts: Vec<DraftCard> = drafts_in_inbox(&repo).await;
+    inbox::accept(&repo, drafts[0].id, monday()).await.unwrap();
+    let explainer: FakeExplainer = FakeExplainer::replying("A cue starts the habit.");
+
+    // when I ask for an explanation
+    let explanation: String = review::explain(&repo, &explainer, drafts[0].id)
+        .await
+        .unwrap();
+
+    // then I get it, and the AI was given the card and its passage
+    assert_eq!(explanation, "A cue starts the habit.");
+    let asked: ExplanationRequest = explainer.last_request();
+    assert_eq!(asked.question, "Cue?");
+    assert_eq!(asked.excerpt.as_deref(), Some("Passage about: Cue?"));
+}
+
+#[tokio::test]
+async fn a_failed_explanation_is_reported() {
+    // given the AI is unavailable
+    let repo: SqliteCardRepo = collection_with_cards(1).await;
+    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
+    let explainer: FakeExplainer = FakeExplainer::failing_with("Claude Code is not signed in");
+
+    // when I ask for an explanation
+    let result: Result<String, GenerateError> =
+        review::explain(&repo, &explainer, session[0].id).await;
+
+    // then I am told why
+    assert_eq!(
+        result,
+        Err(GenerateError("Claude Code is not signed in".to_string()))
+    );
 }

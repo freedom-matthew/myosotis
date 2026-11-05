@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT c.id AS \"id!\", c.question, c.answer, c.due, c.stability, c.difficulty,\n                      c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,\n                      o.source_title AS \"source_title?\", o.excerpt AS \"excerpt?\"\n               FROM cards c\n               LEFT JOIN origins o\n                 ON o.id = (SELECT MIN(id) FROM origins WHERE card_id = c.id)\n               WHERE c.status = 'active' AND c.due <= ?\n               ORDER BY c.due, c.id",
+  "query": "SELECT c.id AS \"id!\", c.question, c.answer, c.due, c.stability, c.difficulty,\n                      c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,\n                      c.suspended AS \"suspended: bool\",\n                      o.source_title AS \"source_title?\", o.excerpt AS \"excerpt?\",\n                      (SELECT COUNT(*) FROM reviews r WHERE r.card_id = c.id)\n                          AS \"review_count!: i64\"\n               FROM cards c\n               LEFT JOIN origins o\n                 ON o.id = (SELECT MIN(id) FROM origins WHERE card_id = c.id)\n               WHERE c.status = 'active'\n               ORDER BY c.id DESC",
   "describe": {
     "columns": [
       {
@@ -136,8 +136,19 @@
         }
       },
       {
-        "name": "source_title?",
+        "name": "suspended: bool",
         "ordinal": 12,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "suspended"
+          }
+        }
+      },
+      {
+        "name": "source_title?",
+        "ordinal": 13,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -148,7 +159,7 @@
       },
       {
         "name": "excerpt?",
-        "ordinal": 13,
+        "ordinal": 14,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -156,10 +167,16 @@
             "name": "excerpt"
           }
         }
+      },
+      {
+        "name": "review_count!: i64",
+        "ordinal": 15,
+        "type_info": "Integer",
+        "origin": "Expression"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       false,
@@ -174,9 +191,11 @@
       false,
       false,
       false,
+      false,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "d1699f5e3b57769ce851d29658c8ff1536e589b87b07ad6dcf6826cc7e643028"
+  "hash": "67a79b0b6ffc2afe2f2dd9698c2baa9b56143fe3766afb64611b1f0b69125395"
 }

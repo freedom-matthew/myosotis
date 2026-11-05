@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { Inbox, Plus, Sun } from '@lucide/svelte';
+	import { Inbox, Library, Plus, Sun } from '@lucide/svelte';
 	import { inbox, type InboxImport } from '#lib/api.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { cn } from '#lib/utils.js';
@@ -28,7 +28,12 @@
 
 	function onkeydown(event: KeyboardEvent): void {
 		if (!event.metaKey && !event.ctrlKey) return;
-		const routes: Record<string, string> = { n: '/new', '1': '/', '2': '/inbox' };
+		const routes: Record<string, string> = {
+			n: '/new',
+			'1': '/',
+			'2': '/inbox',
+			'3': '/library'
+		};
 		const route: string | undefined = routes[event.key];
 		if (route) {
 			event.preventDefault();
@@ -68,6 +73,9 @@
 				{#if inboxCount > 0}
 					<Badge class="bg-primary-tint font-mono text-primary-strong">{inboxCount}</Badge>
 				{/if}
+			</a>
+			<a href="/library" class={navItem('/library')}>
+				<Library size={16} strokeWidth={1.8} />Library
 			</a>
 		</div>
 	</nav>

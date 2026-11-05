@@ -46,6 +46,19 @@ export type TodaySummary = {
 	recent_imports: RecentImport[];
 };
 
+export type LibraryCard = {
+	id: number;
+	question: string;
+	answer: string;
+	source_title: string | null;
+	excerpt: string | null;
+	is_new: boolean;
+	suspended: boolean;
+	review_count: number;
+	recall_percent: number | null;
+	next_due: string;
+};
+
 export type NewImport = { title: string; text: string; depth: Depth; focus: string | null };
 
 export const todaySummary = (): Promise<TodaySummary> => invoke('today_summary');
@@ -55,6 +68,11 @@ export const gradeCard = (card: number, grade: Grade): Promise<void> =>
 export const undoGrade = (card: number): Promise<void> => invoke('undo_grade', { card });
 export const editCard = (card: number, question: string, answer: string): Promise<void> =>
 	invoke('edit_card', { card, question, answer });
+export const explainCard = (card: number): Promise<string> => invoke('explain_card', { card });
+export const libraryCards = (): Promise<LibraryCard[]> => invoke('library_cards');
+export const setSuspended = (card: number, suspended: boolean): Promise<void> =>
+	invoke('set_suspended', { card, suspended });
+export const deleteCard = (card: number): Promise<void> => invoke('delete_card', { card });
 export const startImport = (source: NewImport): Promise<number> =>
 	invoke('start_import', { source });
 export const retryImport = (id: number): Promise<void> => invoke('retry_import', { import: id });

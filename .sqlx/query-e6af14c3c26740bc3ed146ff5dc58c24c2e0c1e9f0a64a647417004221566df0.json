@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM reviews WHERE card_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "e6af14c3c26740bc3ed146ff5dc58c24c2e0c1e9f0a64a647417004221566df0"
+}

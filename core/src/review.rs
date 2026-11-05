@@ -5,6 +5,7 @@ use rs_fsrs::{FSRS, Parameters, Rating, SchedulingInfo, State};
 use serde::{Deserialize, Serialize};
 
 use crate::card::{Card, CardId, RepoError};
+use crate::explain::ExplanationRequest;
 
 /// New cards started per day. Becomes a setting once Settings exists.
 const NEW_CARDS_PER_DAY: usize = 20;
@@ -103,6 +104,14 @@ impl Schedule {
 
     pub fn is_new(&self) -> bool {
         self.phase == Phase::New
+    }
+
+    /// The chance of remembering the card right now, once it has been reviewed.
+    pub fn recall_percent(&self, now: DateTime<Utc>) -> Option<u8> {
+        if self.is_new() {
+            return None;
+        }
+        Some((self.to_fsrs().get_retrievability(now) * 100.0).round() as u8)
     }
 
     pub fn after(&self, grade: Grade, now: DateTime<Utc>) -> Schedule {
@@ -269,6 +278,11 @@ pub trait ReviewRepo {
 
     /// Takes back the card's latest review, restoring the schedule from before it.
     fn undo_review(&self, card: CardId) -> impl Future<Output = Result<(), RepoError>> + Send;
+
+    fn explanation_request(
+        &self,
+        card: CardId,
+    ) -> impl Future<Output = Result<ExplanationRequest, RepoError>> + Send;
 
     fn update_card(
         &self,

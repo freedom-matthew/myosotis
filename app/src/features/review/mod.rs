@@ -1,10 +1,11 @@
 use chrono::{DateTime, Utc};
 use myosotis_core::{
-    Card, CardId, DueCard, Grade, RepoError, ReviewRepo, Schedule, SessionCard, plan_session,
-    session_horizon,
+    Card, CardExplainer, CardId, DueCard, ExplanationRequest, GenerateError, Grade, RepoError,
+    ReviewRepo, Schedule, SessionCard, plan_session, session_horizon,
 };
 use tauri::State;
 
+use crate::claude_code::ClaudeCode;
 use crate::clock;
 use crate::storage::SqliteCardRepo;
 
@@ -42,6 +43,18 @@ pub async fn edit(
     repo.update_card(card, &Card::new(question, answer)).await
 }
 
+pub async fn explain(
+    repo: &impl ReviewRepo,
+    explainer: &impl CardExplainer,
+    card: CardId,
+) -> Result<String, GenerateError> {
+    let request: ExplanationRequest = repo
+        .explanation_request(card)
+        .await
+        .map_err(|error| GenerateError(error.to_string()))?;
+    explainer.explain(&request).await
+}
+
 #[tauri::command]
 pub async fn review_session(repo: State<'_, SqliteCardRepo>) -> Result<Vec<SessionCard>, String> {
     session(repo.inner(), Utc::now(), clock::start_of_local_day())
@@ -75,6 +88,13 @@ pub async fn edit_card(
     answer: String,
 ) -> Result<(), String> {
     edit(repo.inner(), card, &question, &answer)
+        .await
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn explain_card(repo: State<'_, SqliteCardRepo>, card: CardId) -> Result<String, String> {
+    explain(repo.inner(), &ClaudeCode, card)
         .await
         .map_err(|error| error.to_string())
 }

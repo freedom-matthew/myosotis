@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use tauri::Manager;
 
-use crate::features::{import_source, inbox, list_cards, review, today};
+use crate::features::{import_source, inbox, library, list_cards, review, today};
 use crate::storage::SqliteCardRepo;
 
 /// Composition root: wires storage into the slices and starts the app.
@@ -29,6 +29,10 @@ pub fn run() {
             review::grade_card,
             review::undo_grade,
             review::edit_card,
+            review::explain_card,
+            library::library_cards,
+            library::set_suspended,
+            library::delete_card,
             import_source::start_import,
             import_source::retry_import,
             inbox::inbox,

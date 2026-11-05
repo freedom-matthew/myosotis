@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE cards SET suspended = ? WHERE id = ? AND status = 'active'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ef3210616d28eaeece08d7aabd749cefe54c3a167e90c8600b8a3c479522ca29"
+}

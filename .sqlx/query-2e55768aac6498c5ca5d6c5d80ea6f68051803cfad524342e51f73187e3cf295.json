@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT due FROM cards WHERE status = 'active'",
+  "query": "SELECT due FROM cards WHERE status = 'active' AND suspended = 0",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "ab541054b859f9af98053f8825469d3a62edd47f032557433f4be36caccf4999"
+  "hash": "2e55768aac6498c5ca5d6c5d80ea6f68051803cfad524342e51f73187e3cf295"
 }

@@ -36,7 +36,7 @@ Rules:
 - Organise by feature (vertical slices), not by technical layer.
 - Accept some duplication between slices; extract shared code only once a pattern has repeated about three times.
 - Store all times in UTC. API key lives in the OS keyring, never in SQLite or files.
-- For now the LLM is called through the user's own installed Claude Code (`claude -p`, their Pro login), behind `CardGenerator`. The app never reads or stores Claude credentials.
+- For now the LLM is called through the user's own installed Claude Code (`claude -p`, their Pro login), behind `CardGenerator` and `CardExplainer`. Use the `opus` alias, so it's always the latest Opus. The app never reads or stores Claude credentials.
 - Don't add new dependencies without asking first.
 
 ## Code style
