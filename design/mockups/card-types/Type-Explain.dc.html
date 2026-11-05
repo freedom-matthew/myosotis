@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Card type — Explain it</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3E6FB0}a:hover{color:#2C5590}
+</style>
+</helmet>
+<div style="width: 880px; height: 520px; box-sizing: border-box; padding: 28px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; background: #F6F4EF; color: #1D1E22; font-family: Geist, system-ui, sans-serif">
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #66645F">FRONT</span>
+    <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 32px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E8E4DB; box-shadow: 0 1px 2px rgba(29,30,34,0.04), 0 18px 48px rgba(29,30,34,0.06)">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #66645F"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>The Spacing Effect — article · in your own words</span>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 24px; line-height: 1.25; text-wrap: pretty">Why does spacing out practice beat cramming?</p>
+      <label for="mz-explain" style="font-size: 12px; font-weight: 500; color: #4A4945">Your explanation</label>
+      <textarea id="mz-explain" rows="4" style="box-sizing: border-box; width: 100%; margin-top: -10px; resize: none; padding: 12px 14px; border: 1px solid #3E6FB0; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 16px/1.5 Newsreader, Georgia, serif; box-shadow: 0 0 0 3px rgba(62,111,176,0.14); outline: none">When you wait a bit, you have partly forgotten, so remembering takes effort, and the effort makes the memory stick.</textarea>
+    </div>
+    <span style="font-size: 12px; color: #66645F; text-align: center">⌘↵ to check · uses your AI provider</span>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #66645F">BACK</span>
+    <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 32px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E8E4DB; box-shadow: 0 1px 2px rgba(29,30,34,0.04), 0 18px 48px rgba(29,30,34,0.06)">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #66645F"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>The Spacing Effect — article · in your own words</span>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 24px; line-height: 1.25; text-wrap: pretty">Why does spacing out practice beat cramming?</p>
+      <div style="height: 1px; background: #EEEBE4"></div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 10px; align-items: flex-start">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3E6FB0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Covered" style="flex: none; margin-top: 4px"><path d="M20 6 9 17l-5-5"></path></svg>
+          <span style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.45; color: #34353A">Effortful retrieval after some forgetting strengthens the memory.</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: flex-start">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A4A12" stroke-width="2.4" stroke-linecap="round" role="img" aria-label="Missing" style="flex: none; margin-top: 4px"><circle cx="12" cy="12" r="8"></circle></svg>
+          <span style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.45; color: #34353A">Missing: why cramming <em>feels</em> effective. Fresh material is fluent, and fluency is mistaken for learning.</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span style="padding: 6px 12px; border-radius: 999px; background: #F4F1EA; font-size: 14px; color: #4A4945">Mostly there · suggested grade: Hard</span>
+        <button type="button" style="padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; color: #4A4945; font: 12px Geist, system-ui, sans-serif">Model answer <span style="font: 12px 'Geist Mono', monospace; color: #66645F">M</span></button>
+      </div>
+    </div>
+    <span style="font-size: 12px; color: #66645F; text-align: center">The model answer opens on request to keep the back short</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":880,"height":520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

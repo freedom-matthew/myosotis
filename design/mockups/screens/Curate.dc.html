@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>myosotis — Inbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3E6FB0}a:hover{color:#2C5590}
+.mz-nav{transition:background-color 120ms ease}
+.mz-nav:hover{background:#E9E5DC}
+@keyframes mz-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes mz-shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+.mz-open{animation:mz-in 220ms cubic-bezier(.2,.7,.2,1) both}
+.mz-row{transition:background-color 120ms ease, border-color 120ms ease;cursor:pointer}
+.mz-row:hover{border-color:#D6D1C6}
+.mz-act{transition:background-color 120ms ease, border-color 120ms ease;cursor:pointer}
+.mz-act:hover{background:#F1EEE7}
+.mz-skel{background:linear-gradient(90deg,#EEEBE4 0%,#F7F5F0 50%,#EEEBE4 100%);background-size:400px 100%;animation:mz-shimmer 1.4s linear infinite}
+mark{transition:background-color 200ms ease}
+@media (prefers-reduced-motion: reduce){.mz-open,.mz-skel{animation:none}}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; background: #F6F4EF; color: #1D1E22; font-family: Geist, system-ui, sans-serif">
+  <nav aria-label="Main" style="flex: 1 1 216px; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 20px; background: #F0EDE6; border-right: 1px solid #E6E2D9">
+    <div style="padding: 0 10px"><span style="font-family: Newsreader, Georgia, serif; font-style: italic; font-size: 24px; line-height: 1; letter-spacing: -0.005em">myosotis</span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <a href="Import.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: #1D1E22; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500">
+        <span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New source</span>
+        <span style="font: 12px 'Geist Mono', monospace; color: #C9CBD1">⌘N</span>
+      </a>
+      <button type="button" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; border: 1px solid #E0DBD1; background: #F8F6F1; color: #4A4945; font: 14px Geist, system-ui, sans-serif; cursor: pointer">
+        <span style="display: flex; align-items: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search</span>
+        <span style="font: 12px 'Geist Mono', monospace; color: #66645F">⌘K</span>
+      </button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <a class="mz-nav" href="Today.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Today</a>
+      <a class="mz-nav" href="Curate.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #E5E1D8; color: #1D1E22; text-decoration: none; font-size: 14px; font-weight: 500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span style="flex: 1">Inbox</span><span style="font: 500 12px 'Geist Mono', monospace; padding: 1px 8px; border-radius: 999px; background: #DCE6F4; color: #2C5590">{{pendingCount}}</span></a>
+      <a class="mz-nav" href="Library.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Library</a>
+    </div>
+    <div style="flex: 1"></div>
+    <a class="mz-nav" href="Settings.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"></path></svg>Settings</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 36px 40px 28px; display: flex; flex-direction: column; gap: 24px">
+    <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 12px; color: #66645F">Inbox</span>
+        <h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 30px; font-weight: 400; letter-spacing: -0.01em">The Psychology of Habit — notes</h1>
+        <span style="font-size: 14px; color: #66645F">{{summary}}</span>
+      </div>
+      <div style="display: flex; gap: 8px">
+        <button type="button" class="mz-act" onClick="{{acceptAll}}" style="display: flex; align-items: center; gap: 10px; padding: 8px 14px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 500 14px Geist, system-ui, sans-serif">Accept all remaining<span style="font: 12px 'Geist Mono', monospace; color: #66645F">⇧A</span></button>
+      </div>
+    </header>
+
+    <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+      <section aria-label="Source text" style="flex: 1 1 320px; max-width: 440px; box-sizing: border-box; padding: 24px 24px; border-radius: 16px; background: #FBFAF7; border: 1px solid #E6E2D9; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: #66645F">SOURCE · KEPT UNTIL THIS INBOX IS DONE</span>
+        <sc-for list="{{paras}}" as="para" hint-placeholder-count="3">
+          <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.65; color: #34353A">
+            <sc-for list="{{para.segs}}" as="seg" hint-placeholder-count="2">
+              <sc-if value="{{seg.hl}}" hint-placeholder-val="{{ false }}"><mark style="background: #F6E3A6; color: #1D1E22; border-radius: 6px; padding: 1px 0; box-shadow: 0 0 0 2px #F6E3A6">{{seg.text}}</mark></sc-if>
+              <sc-if value="{{seg.plain}}" hint-placeholder-val="{{ true }}"><span>{{seg.text}} </span></sc-if>
+            </sc-for>
+          </p>
+        </sc-for>
+      </section>
+
+      <section aria-label="Generated cards" style="flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+        <sc-for list="{{items}}" as="it" hint-placeholder-count="6">
+          <sc-if value="{{it.isAccepted}}" hint-placeholder-val="{{ false }}">
+            <button type="button" class="mz-row" onClick="{{it.focus}}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; border: 1px solid #E9E5DD; border-radius: 14px; background: transparent; color: #66645F; font: 14px Geist, system-ui, sans-serif; text-align: left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3E6FB0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Accepted" role="img"><path d="M20 6 9 17l-5-5"></path></svg>
+              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{it.q}}</span>
+            </button>
+          </sc-if>
+          <sc-if value="{{it.isIdle}}" hint-placeholder-val="{{ true }}">
+            <button type="button" class="mz-row" onClick="{{it.focus}}" style="display: flex; flex-direction: column; gap: 6px; width: 100%; padding: 14px 16px; border: 1px solid #E6E2D9; border-radius: 14px; background: #FFFFFF; color: #1D1E22; font: 14px Geist, system-ui, sans-serif; text-align: left">
+              <span style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.35">{{it.q}}</span>
+              <span style="font-size: 14px; line-height: 1.45; color: #66645F">{{it.a}}</span>
+            </button>
+          </sc-if>
+          <sc-if value="{{it.isOpen}}" hint-placeholder-val="{{ false }}">
+            <div class="mz-open" style="display: flex; flex-direction: column; gap: 14px; padding: 20px 20px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #3E6FB0; box-shadow: 0 0 0 3px rgba(62,111,176,0.14), 0 10px 28px rgba(29,30,34,0.06)">
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 12px; font-weight: 500; color: #66645F">Question</span>
+                <span style="font-family: Newsreader, Georgia, serif; font-size: 18px; line-height: 1.35">{{it.q}}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 12px; font-weight: 500; color: #66645F">Answer</span>
+                <span style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.5; color: #34353A">{{it.a}}</span>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid #EEEBE4">
+                <button type="button" class="mz-act" onClick="{{it.accept}}" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #3E6FB0; border-radius: 10px; background: #3E6FB0; color: #FFFFFF; font: 500 14px Geist, system-ui, sans-serif">Accept<span style="font: 12px 'Geist Mono', monospace; color: #FFFFFF">A</span></button>
+                <button type="button" class="mz-act" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 500 14px Geist, system-ui, sans-serif">Edit<span style="font: 12px 'Geist Mono', monospace; color: #66645F">E</span></button>
+                <button type="button" class="mz-act" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 500 14px Geist, system-ui, sans-serif">Rewrite<span style="font: 12px 'Geist Mono', monospace; color: #66645F">R</span></button>
+                <span style="flex: 1"></span>
+                <button type="button" class="mz-act" onClick="{{it.remove}}" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #4A4945; font: 500 14px Geist, system-ui, sans-serif">Delete<span style="font: 12px 'Geist Mono', monospace; color: #66645F">D</span></button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{it.isDup}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E2D9">
+              <span style="align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: #FBF4DE; color: #6E5A1E; font: 500 12px Geist, system-ui, sans-serif">Similar card already in your collection</span>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+                <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 10px; background: #FBFAF7; border: 1px solid #EEEBE4">
+                  <span style="font-size: 12px; color: #66645F">New · from this source</span>
+                  <span style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.35">{{it.q}}</span>
+                  <span style="font-size: 14px; line-height: 1.45; color: #66645F">{{it.a}}</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 10px; background: #FBFAF7; border: 1px solid #EEEBE4">
+                  <span style="font-size: 12px; color: #66645F">Existing · {{it.dupFrom}} · {{it.dupReviews}} reviews</span>
+                  <span style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.35">{{it.dupQ}}</span>
+                  <span style="font-size: 14px; line-height: 1.45; color: #66645F">{{it.dupA}}</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                <button type="button" class="mz-act" onClick="{{it.skip}}" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #3E6FB0; border-radius: 10px; background: #3E6FB0; color: #FFFFFF; font: 500 14px Geist, system-ui, sans-serif">Skip<span style="font: 12px 'Geist Mono', monospace; color: #FFFFFF">S</span></button>
+                <button type="button" class="mz-act" onClick="{{it.merge}}" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 500 14px Geist, system-ui, sans-serif">Add source to existing<span style="font: 12px 'Geist Mono', monospace; color: #66645F">M</span></button>
+                <button type="button" class="mz-act" onClick="{{it.keep}}" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #4A4945; font: 500 14px Geist, system-ui, sans-serif">Keep both<span style="font: 12px 'Geist Mono', monospace; color: #66645F">K</span></button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{it.isMerged}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; padding: 12px 16px; border: 1px solid #E9E5DD; border-radius: 14px; color: #66645F; font: 14px Geist, system-ui, sans-serif">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3E6FB0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6v6a4 4 0 0 0 4 4h6"></path><path d="m15 13 3 3-3 3"></path></svg>
+              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Source added to “{{it.dupQ}}”</span>
+            </div>
+          </sc-if>
+        </sc-for>
+        <div aria-label="Generating more cards" style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px dashed #DDD8CE; border-radius: 14px">
+          <div class="mz-skel" style="height: 12px; width: 72%; border-radius: 6px"></div>
+          <div class="mz-skel" style="height: 10px; width: 48%; border-radius: 6px"></div>
+        </div>
+      </section>
+    </div>
+
+    <footer style="display: flex; flex-wrap: wrap; gap: 20px; font-size: 12px; color: #66645F">
+      <span><span style="font-family: 'Geist Mono', monospace">S M K</span> duplicates: skip · add source · keep both</span>
+      <span><span style="font-family: 'Geist Mono', monospace">J K</span> move</span>
+      <span><span style="font-family: 'Geist Mono', monospace">A</span> accept</span>
+      <span><span style="font-family: 'Geist Mono', monospace">E</span> edit</span>
+      <span><span style="font-family: 'Geist Mono', monospace">R</span> ask AI to rewrite</span>
+      <span><span style="font-family: 'Geist Mono', monospace">D</span> delete</span>
+    </footer>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const passages = [
+      'Habits form through a loop of cue, routine and reward.',
+      'Over many repetitions, control of the behaviour shifts from goal-directed circuits in the prefrontal cortex to the dorsolateral striatum, which is why a habit can persist even when its reward is no longer wanted.',
+      'Context is the strongest cue: the same place, the same time of day and the same preceding action trigger the routine automatically.',
+      'In diary studies, Wendy Wood and colleagues found that roughly 43% of daily actions were repeated in the same context, usually while people were thinking about something else.',
+      'Implementation intentions — “when X happens, I will do Y” — help a new habit start by borrowing an existing cue.'
+    ];
+    const cards = [
+      { p: 0, q: 'What three parts make up the habit loop?', a: 'Cue, routine and reward.' },
+      { p: 1, q: 'Which brain region takes over control of a behaviour as it becomes a habit?', a: 'The dorsolateral striatum, taking over from goal-directed prefrontal circuits.' },
+      { p: 1, q: 'Why can a habit persist after its reward is no longer wanted?', a: 'Control has shifted to the striatum, so the cue triggers the routine without consulting the goal.' },
+      { p: 2, q: 'What is the strongest cue for triggering a habit?', a: 'Context: the same place, time of day or preceding action.', dup: { q: 'Which cue most reliably triggers a habit?', a: 'Context — the same place, time or preceding action.', from: 'Atomic Habits — notes', reviews: 5 } },
+      { p: 3, q: 'In diary studies, roughly what share of daily actions were repeated in the same context?', a: 'About 43%.' },
+      { p: 4, q: 'What is an implementation intention?', a: 'A plan of the form “when X happens, I will do Y” that ties a new behaviour to an existing cue.' }
+    ];
+    const s = this.state || {};
+    const status = s.status || ['ok', 'ok', 'new', 'dup', 'new', 'new'];
+    const focus = s.focus !== undefined ? s.focus : 2;
+    const nextPending = (st, from) => {
+      for (let k = 1; k <= st.length; k++) { const j = (from + k) % st.length; if (st[j] === 'new') return j; }
+      return -1;
+    };
+    const setStatus = (i, v) => {
+      const st = status.slice(); st[i] = v;
+      this.setState({ status: st, focus: nextPending(st, i) });
+    };
+    const items = [];
+    cards.forEach((c, i) => {
+      if (status[i] === 'del') return;
+      const open = i === focus;
+      items.push({
+        q: c.q, a: c.a,
+        isOpen: open && status[i] !== 'dup' && status[i] !== 'merged', isAccepted: !open && status[i] === 'ok', isIdle: !open && status[i] === 'new',
+        isDup: status[i] === 'dup', isMerged: status[i] === 'merged',
+        dupQ: c.dup ? c.dup.q : '', dupA: c.dup ? c.dup.a : '', dupFrom: c.dup ? c.dup.from : '', dupReviews: c.dup ? String(c.dup.reviews) : '',
+        skip: () => setStatus(i, 'del'), merge: () => setStatus(i, 'merged'), keep: () => setStatus(i, 'new'),
+        focus: () => this.setState({ focus: i }),
+        accept: () => setStatus(i, 'ok'),
+        remove: () => setStatus(i, 'del')
+      });
+    });
+    const hl = focus >= 0 ? cards[focus].p : -1;
+    const seg = (p) => ({ text: passages[p], hl: p === hl, plain: p !== hl });
+    const paras = [{ segs: [seg(0), seg(1)] }, { segs: [seg(2), seg(3)] }, { segs: [seg(4)] }];
+    const accepted = status.filter((x) => x === 'ok').length;
+    const pending = status.filter((x) => x === 'new').length;
+    const deleted = status.filter((x) => x === 'del').length;
+    const dups = status.filter((x) => x === 'dup').length;
+    return {
+      items, paras, pendingCount: pending,
+      summary: accepted + ' accepted · ' + pending + ' to check' + (dups ? ' · ' + dups + ' possible duplicate' : '') + (deleted ? ' · ' + deleted + ' removed' : '') + ' · still generating…',
+      acceptAll: () => this.setState({ status: status.map((x) => (x === 'new' ? 'ok' : x)), focus: -1 })
+    };
+  }
+}
+</script>
+</body>
+</html>

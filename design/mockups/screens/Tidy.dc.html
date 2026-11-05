@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>myosotis — Tidy up</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3E6FB0}a:hover{color:#2C5590}
+.mz-nav{transition:background-color 120ms ease}
+.mz-nav:hover{background:#E9E5DC}
+.mz-tr{transition:background-color 120ms ease;cursor:pointer}
+.mz-tr:hover{background:#F3F0EA}
+.mz-chip{transition:background-color 120ms ease, border-color 120ms ease;cursor:pointer}
+.mz-chip:hover{border-color:#CBC5B9}
+.mz-field:focus{outline:none;border-color:#3E6FB0;box-shadow:0 0 0 3px rgba(62,111,176,0.16)}
+@keyframes mz-in{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+.mz-x{animation:mz-in 220ms cubic-bezier(.2,.7,.2,1) both}
+@media (prefers-reduced-motion: reduce){.mz-x{animation:none}}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; background: #F6F4EF; color: #1D1E22; font-family: Geist, system-ui, sans-serif">
+  <nav aria-label="Main" style="flex: 1 1 216px; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 20px; background: #F0EDE6; border-right: 1px solid #E6E2D9">
+    <div style="padding: 0 10px"><span style="font-family: Newsreader, Georgia, serif; font-style: italic; font-size: 24px; line-height: 1; letter-spacing: -0.005em">myosotis</span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <a href="Import.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: #1D1E22; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500">
+        <span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New source</span>
+        <span style="font: 12px 'Geist Mono', monospace; color: #C9CBD1">⌘N</span>
+      </a>
+      <button type="button" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; border: 1px solid #E0DBD1; background: #F8F6F1; color: #4A4945; font: 14px Geist, system-ui, sans-serif; cursor: pointer">
+        <span style="display: flex; align-items: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search</span>
+        <span style="font: 12px 'Geist Mono', monospace; color: #66645F">⌘K</span>
+      </button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <a class="mz-nav" href="Today.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Today</a>
+      <a class="mz-nav" href="Curate.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span style="flex: 1">Inbox</span><span style="font: 500 12px 'Geist Mono', monospace; padding: 1px 8px; border-radius: 999px; background: #DCE6F4; color: #2C5590">12</span></a>
+      <a class="mz-nav" href="Library.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: #E5E1D8; color: #1D1E22; text-decoration: none; font-size: 14px; font-weight: 500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Library</a>
+    </div>
+    <div style="flex: 1"></div>
+    <a class="mz-nav" href="Settings.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"></path></svg>Settings</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 40px 48px 48px">
+    <div style="max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+      <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <a href="Library.dc.html" style="font-size: 12px; color: #66645F; text-decoration: none">Library</a>
+          <h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 30px; font-weight: 400; letter-spacing: -0.01em">Tidy up</h1>
+          <p style="margin: 0; font-size: 14px; color: #66645F">{{summary}} Nothing changes until you confirm.</p>
+        </div>
+        <button type="button" class="mz-chip" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 500 14px Geist, system-ui, sans-serif">Check again</button>
+      </header>
+
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+        <sc-if value="{{g.isOpen}}" hint-placeholder-val="{{ false }}">
+          <section class="mz-panel" style="display: flex; flex-direction: column; gap: 16px; padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E6E2D9">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+              <span style="font-size: 14px; font-weight: 500">{{g.title}}</span>
+              <span style="font-size: 12px; color: #66645F">{{g.note}}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px">
+              <sc-for list="{{g.members}}" as="m" hint-placeholder-count="2">
+                <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 10px; background: #FBFAF7; border: 1px solid #EEEBE4">
+                  <span style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.35">{{m.q}}</span>
+                  <span style="font-size: 14px; line-height: 1.45; color: #66645F">{{m.a}}</span>
+                  <span style="margin-top: 4px; font-size: 12px; color: #66645F">{{m.from}} · <span style="font-family: 'Geist Mono', monospace">{{m.reviews}}</span> reviews</span>
+                  <sc-if value="{{m.keeps}}" hint-placeholder-val="{{ false }}"><span style="align-self: flex-start; padding: 2px 8px; border-radius: 999px; background: #DCE6F4; color: #2C5590; font: 500 12px Geist, system-ui, sans-serif">Keeps its review history</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 10px; background: #EEF3FA; border: 1px solid #DCE6F4">
+              <span style="font-size: 12px; font-weight: 500; color: #2C5590">Suggested merged card</span>
+              <span style="font-family: Newsreader, Georgia, serif; font-size: 18px; line-height: 1.35">{{g.mq}}</span>
+              <span style="font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.5; color: #34353A">{{g.ma}}</span>
+              <span style="font-size: 12px; color: #4A4945">Keeps every source: {{g.sources}}</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <button type="button" class="mz-chip" onClick="{{g.merge}}" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #3E6FB0; border-radius: 10px; background: #3E6FB0; color: #FFFFFF; font: 500 14px Geist, system-ui, sans-serif">Merge<span style="font: 12px 'Geist Mono', monospace; color: #FFFFFF">M</span></button>
+              <button type="button" class="mz-chip" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 500 14px Geist, system-ui, sans-serif">Edit merged card<span style="font: 12px 'Geist Mono', monospace; color: #66645F">E</span></button>
+              <span style="flex: 1"></span>
+              <button type="button" class="mz-chip" onClick="{{g.dismiss}}" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #4A4945; font: 500 14px Geist, system-ui, sans-serif">Not duplicates<span style="font: 12px 'Geist Mono', monospace; color: #66645F">N</span></button>
+            </div>
+          </section>
+        </sc-if>
+        <sc-if value="{{g.isClosed}}" hint-placeholder-val="{{ true }}">
+          <button type="button" class="mz-tr" onClick="{{g.open}}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: 1px solid #E6E2D9; border-radius: 14px; background: #FFFFFF; color: #1D1E22; font: 14px Geist, system-ui, sans-serif; text-align: left">
+            <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: Newsreader, Georgia, serif; font-size: 16px">{{g.mq}}</span>
+            <span style="font-size: 12px; color: #66645F; white-space: nowrap">{{g.title}}</span>
+          </button>
+        </sc-if>
+        <sc-if value="{{g.isDone}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid #E9E5DD; border-radius: 14px; color: #66645F; font-size: 14px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3E6FB0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+            <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{g.doneText}}</span>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const data = [
+      { title: '2 similar cards', note: 'Same idea, different wording',
+        mq: 'What is the strongest cue for triggering a habit?', ma: 'Context: the same place, time of day or preceding action.',
+        members: [
+          { q: 'Which cue most reliably triggers a habit?', a: 'Context — the same place, time or preceding action.', from: 'Atomic Habits — notes', reviews: 5, keeps: true },
+          { q: 'What is the strongest cue for triggering a habit?', a: 'Context: the same place, time of day or preceding action.', from: 'The Psychology of Habit — notes', reviews: 2, keeps: false } ] },
+      { title: '3 similar cards', note: 'One concept from three sources',
+        mq: 'Why does spaced practice beat cramming for long-term retention?', ma: 'Retrieval after some forgetting strengthens a memory more than retrieval while it is still fresh.',
+        members: [
+          { q: 'Why does spaced practice beat cramming for long-term retention?', a: 'Retrieval after some forgetting strengthens a memory more.', from: 'The Spacing Effect', reviews: 6, keeps: true },
+          { q: 'Why are spaced sessions more effective than massed practice?', a: 'Spacing lets some forgetting happen, so recall takes effort.', from: 'Make It Stick — notes', reviews: 3, keeps: false },
+          { q: 'What makes spacing work?', a: 'Effortful recall after a delay.', from: 'Learning How to Learn', reviews: 1, keeps: false } ] },
+      { title: '2 similar cards', note: 'Same fact',
+        mq: 'Where in the mitochondrion is ATP synthase located?', ma: 'In the inner mitochondrial membrane.',
+        members: [
+          { q: 'Where in the mitochondrion is ATP synthase located?', a: 'In the inner mitochondrial membrane.', from: 'Cell biology — ch. 3', reviews: 3, keeps: true },
+          { q: 'In which membrane does ATP synthase sit?', a: 'The inner membrane of the mitochondrion.', from: 'Biochemistry — notes', reviews: 2, keeps: false } ] },
+      { title: '2 similar cards', note: 'Same fact',
+        mq: 'Who became president of Czechoslovakia in December 1989?', ma: 'Václav Havel.',
+        members: [
+          { q: 'Who became president of Czechoslovakia in December 1989?', a: 'Václav Havel.', from: 'Czech history — notes', reviews: 8, keeps: true },
+          { q: 'Who was elected president after the Velvet Revolution?', a: 'Václav Havel, on 29 December 1989.', from: 'Modern Europe — notes', reviews: 1, keeps: false } ] }
+    ];
+    const s = this.state || {};
+    const st = s.st || ['open', 'closed', 'closed', 'closed'];
+    const set = (i, v) => {
+      const n = st.slice(); n[i] = v;
+      if (v !== 'open') { const j = n.indexOf('closed'); if (j >= 0) n[j] = 'open'; }
+      else { n.forEach((x, k) => { if (k !== i && x === 'open') n[k] = 'closed'; }); }
+      this.setState({ st: n });
+    };
+    const groups = data.map((g, i) => ({
+      ...g,
+      members: g.members.map((m) => ({ ...m, reviews: String(m.reviews) })),
+      sources: g.members.map((m) => m.from).join(', '),
+      isOpen: st[i] === 'open', isClosed: st[i] === 'closed', isDone: st[i] === 'merged' || st[i] === 'kept',
+      doneText: st[i] === 'merged' ? 'Merged · “' + g.mq + '” now has ' + g.members.length + ' sources' : 'Kept separate · ' + g.mq,
+      open: () => set(i, 'open'), merge: () => set(i, 'merged'), dismiss: () => set(i, 'kept')
+    }));
+    const left = st.filter((x) => x === 'open' || x === 'closed').length;
+    return { groups, summary: left ? left + ' groups of similar cards found among 1,284.' : 'All tidy.' };
+  }
+}
+</script>
+</body>
+</html>

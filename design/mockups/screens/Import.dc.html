@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>myosotis — New source</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3E6FB0}a:hover{color:#2C5590}
+.mz-nav{transition:background-color 120ms ease}
+.mz-nav:hover{background:#E9E5DC}
+.mz-seg{transition:background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;cursor:pointer}
+.mz-field:focus{outline:none;border-color:#3E6FB0;box-shadow:0 0 0 3px rgba(62,111,176,0.16)}
+.mz-cta{transition:background-color 120ms ease, transform 120ms ease}
+.mz-cta:hover{background:#36649F;color:#FFFFFF}
+.mz-cta:active{transform:translateY(1px)}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; background: #F6F4EF; color: #1D1E22; font-family: Geist, system-ui, sans-serif">
+  <nav aria-label="Main" style="flex: 1 1 216px; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 20px; background: #F0EDE6; border-right: 1px solid #E6E2D9">
+    <div style="padding: 0 10px"><span style="font-family: Newsreader, Georgia, serif; font-style: italic; font-size: 24px; line-height: 1; letter-spacing: -0.005em">myosotis</span></div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <a href="Import.dc.html" aria-current="page" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: #1D1E22; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; box-shadow: 0 0 0 3px #DCE6F4">
+        <span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New source</span>
+        <span style="font: 12px 'Geist Mono', monospace; color: #C9CBD1">⌘N</span>
+      </a>
+      <button type="button" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; border: 1px solid #E0DBD1; background: #F8F6F1; color: #4A4945; font: 14px Geist, system-ui, sans-serif; cursor: pointer">
+        <span style="display: flex; align-items: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search</span>
+        <span style="font: 12px 'Geist Mono', monospace; color: #66645F">⌘K</span>
+      </button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <a class="mz-nav" href="Today.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Today</a>
+      <a class="mz-nav" href="Curate.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span style="flex: 1">Inbox</span><span style="font: 500 12px 'Geist Mono', monospace; padding: 1px 8px; border-radius: 999px; background: #DCE6F4; color: #2C5590">12</span></a>
+      <a class="mz-nav" href="Library.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Library</a>
+    </div>
+    <div style="flex: 1"></div>
+    <a class="mz-nav" href="Settings.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #4A4945; text-decoration: none; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"></path></svg>Settings</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 48px 48px 40px">
+    <div style="max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+      <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 30px; font-weight: 400; letter-spacing: -0.01em">New source</h1>
+          <p style="margin: 0; font-size: 14px; color: #66645F">Paste or open anything worth keeping. Cards land in your Inbox for a quick check.</p>
+        </div>
+        <div role="tablist" aria-label="Source type" style="display: flex; gap: 2px; padding: 4px; border-radius: 10px; background: #ECE8E0">
+          <sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+            <button type="button" role="tab" class="mz-seg" onClick="{{m.pick}}" aria-selected="{{m.on}}" style="padding: 8px 14px; border: 0; border-radius: 8px; font: 500 14px Geist, system-ui, sans-serif; {{m.style}}">{{m.label}}</button>
+          </sc-for>
+        </div>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+        <section style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <label for="mz-title" style="font-size: 12px; font-weight: 500; color: #4A4945">Title</label>
+            <input id="mz-title" class="mz-field" type="text" value="The Psychology of Habit — notes" style="box-sizing: border-box; width: 100%; padding: 12px 14px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 16px Geist, system-ui, sans-serif">
+          </div>
+          <sc-if value="{{isPaste}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="mz-text" style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: #4A4945">Text<span style="font: 400 12px 'Geist Mono', monospace; color: #66645F">612 words</span></label>
+              <textarea id="mz-text" class="mz-field" rows="13" style="box-sizing: border-box; width: 100%; resize: vertical; padding: 16px 20px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #2A2B30; font: 16px/1.6 Newsreader, Georgia, serif">Habits form through a loop of cue, routine and reward. Over many repetitions, control of the behaviour shifts from goal-directed circuits in the prefrontal cortex to the dorsolateral striatum, which is why a habit can persist even when its reward is no longer wanted.
+
+Context is the strongest cue: the same place, the same time of day and the same preceding action trigger the routine automatically. In diary studies, Wendy Wood and colleagues found that roughly 43% of daily actions were repeated in the same context, usually while people were thinking about something else.
+
+Implementation intentions — “when X happens, I will do Y” — help a new habit start by borrowing an existing cue…</textarea>
+            </div>
+          </sc-if>
+          <sc-if value="{{isFile}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 300px; border: 1.5px dashed #CFC9BD; border-radius: 16px; background: #FBFAF7; text-align: center; padding: 24px">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#66645F" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>
+              <span style="font-size: 16px; font-weight: 500">Drop a file here</span>
+              <span style="font-size: 14px; color: #66645F">.txt · .md · .pdf · .docx</span>
+              <button type="button" style="margin-top: 4px; padding: 8px 16px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FFFFFF; color: #1D1E22; font: 500 14px Geist, system-ui, sans-serif; cursor: pointer">Choose file…</button>
+            </div>
+          </sc-if>
+        </section>
+
+        <aside style="flex: 1 1 280px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px; padding: 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E6E2D9">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 12px; font-weight: 500; color: #4A4945">How much to extract</span>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <sc-for list="{{depths}}" as="d" hint-placeholder-count="3">
+                <button type="button" class="mz-seg" onClick="{{d.pick}}" aria-pressed="{{d.on}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border-radius: 10px; text-align: left; font: 500 14px Geist, system-ui, sans-serif; {{d.style}}">{{d.label}}<span style="font-weight: 400; font-size: 12px; color: #66645F">{{d.hint}}</span></button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 12px; font-weight: 500; color: #4A4945">Card types</span>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 14px"><input type="checkbox" checked style="width: 16px; height: 16px; accent-color: #3E6FB0">Question and answer</label>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 14px"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #3E6FB0">Fill in the blank</label>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <label for="mz-focus" style="font-size: 12px; font-weight: 500; color: #4A4945">Focus on <span style="font-weight: 400; color: #66645F">(optional)</span></label>
+            <input id="mz-focus" class="mz-field" type="text" placeholder="e.g. definitions and mechanisms only" style="box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid #DDD8CE; border-radius: 10px; background: #FBFAF7; color: #1D1E22; font: 14px Geist, system-ui, sans-serif">
+          </div>
+          <a class="mz-cta" href="Curate.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px 16px; border-radius: 14px; background: #3E6FB0; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500">Generate cards<span style="font: 12px 'Geist Mono', monospace; padding: 2px 6px; border-radius: 6px; background: rgba(255,255,255,0.18)">⌘↵</span></a>
+          <span style="font-size: 12px; color: #66645F; text-align: center">Claude Sonnet · about 14 cards</span>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const mode = s.mode || 'paste';
+    const depth = s.depth || 'balanced';
+    const on = 'background: #FFFFFF; color: #1D1E22; box-shadow: 0 1px 2px rgba(29,30,34,0.08)';
+    const off = 'background: transparent; color: #4A4945';
+    const modes = [['paste', 'Paste text'], ['file', 'Open file']].map(([id, label]) => ({
+      label, on: mode === id, style: mode === id ? on : off, pick: () => this.setState({ mode: id })
+    }));
+    const dOn = 'border: 1px solid #3E6FB0; background: #EEF3FA; color: #1D1E22; box-shadow: 0 0 0 1px #3E6FB0 inset';
+    const dOff = 'border: 1px solid #E6E2D9; background: #FBFAF7; color: #1D1E22';
+    const depths = [
+      ['essentials', 'Essentials', 'Only the core ideas · ~6 cards'],
+      ['balanced', 'Balanced', 'Key ideas and supporting facts · ~14 cards'],
+      ['thorough', 'Thorough', 'Every testable detail · ~30 cards']
+    ].map(([id, label, hint]) => ({
+      label, hint, on: depth === id, style: depth === id ? dOn : dOff, pick: () => this.setState({ depth: id })
+    }));
+    return { modes, depths, isPaste: mode === 'paste', isFile: mode === 'file' };
+  }
+}
+</script>
+</body>
+</html>

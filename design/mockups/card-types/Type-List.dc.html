@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Card type — List or sequence</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3E6FB0}a:hover{color:#2C5590}
+</style>
+</helmet>
+<div style="width: 880px; height: 520px; box-sizing: border-box; padding: 28px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; background: #F6F4EF; color: #1D1E22; font-family: Geist, system-ui, sans-serif">
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #66645F">FRONT</span>
+    <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 32px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E8E4DB; box-shadow: 0 1px 2px rgba(29,30,34,0.04), 0 18px 48px rgba(29,30,34,0.06)">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #66645F"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>The Psychology of Habit — notes</span>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 24px; line-height: 1.25; text-wrap: pretty">Name the parts of the habit loop, in order.</p>
+      <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
+        <li style="display: flex; align-items: center; gap: 12px"><span style="width: 20px; font: 14px 'Geist Mono', monospace; color: #66645F">1</span><span style="flex: 1; height: 1px; background: #E0DBD1"></span></li>
+        <li style="display: flex; align-items: center; gap: 12px"><span style="width: 20px; font: 14px 'Geist Mono', monospace; color: #66645F">2</span><span style="flex: 1; height: 1px; background: #E0DBD1"></span></li>
+        <li style="display: flex; align-items: center; gap: 12px"><span style="width: 20px; font: 14px 'Geist Mono', monospace; color: #66645F">3</span><span style="flex: 1; height: 1px; background: #E0DBD1"></span></li>
+      </ol>
+    </div>
+    <span style="font-size: 12px; color: #66645F; text-align: center">The number of items is a hint, so it’s shown</span>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 12px; font-weight: 500; letter-spacing: 0.06em; color: #66645F">BACK · TICK WHAT YOU GOT</span>
+    <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 32px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E8E4DB; box-shadow: 0 1px 2px rgba(29,30,34,0.04), 0 18px 48px rgba(29,30,34,0.06)">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #66645F"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>The Psychology of Habit — notes</span>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 24px; line-height: 1.25; text-wrap: pretty">Name the parts of the habit loop, in order.</p>
+      <div style="height: 1px; background: #EEEBE4"></div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px; background: #EEF3FA"><input type="checkbox" checked style="width: 16px; height: 16px; accent-color: #3E6FB0"><span style="width: 16px; font: 14px 'Geist Mono', monospace; color: #66645F">1</span><span style="font-family: Newsreader, Georgia, serif; font-size: 18px">Cue</span></label>
+        <label style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px; background: #EEF3FA"><input type="checkbox" checked style="width: 16px; height: 16px; accent-color: #3E6FB0"><span style="width: 16px; font: 14px 'Geist Mono', monospace; color: #66645F">2</span><span style="font-family: Newsreader, Georgia, serif; font-size: 18px">Routine</span></label>
+        <label style="display: flex; align-items: center; gap: 12px; padding: 6px 12px; border-radius: 10px; background: #FBFAF7; border: 1px dashed #DDD8CE"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #3E6FB0"><span style="width: 16px; font: 14px 'Geist Mono', monospace; color: #66645F">3</span><span style="font-family: Newsreader, Georgia, serif; font-size: 18px">Reward</span></label>
+      </div>
+      <span style="align-self: flex-start; padding: 6px 12px; border-radius: 999px; background: #F4F1EA; font-size: 14px; color: #4A4945">2 of 3 · suggested grade: Hard</span>
+    </div>
+    <span style="font-size: 12px; color: #66645F; text-align: center">Click what you recalled · Enter accepts the suggested grade</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":880,"height":520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

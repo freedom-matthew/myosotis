@@ -36,6 +36,7 @@ Rules:
 - Organise by feature (vertical slices), not by technical layer.
 - Accept some duplication between slices; extract shared code only once a pattern has repeated about three times.
 - Store all times in UTC. API key lives in the OS keyring, never in SQLite or files.
+- For now the LLM is called through the user's own installed Claude Code (`claude -p`, their Pro login), behind `CardGenerator`. The app never reads or stores Claude credentials.
 - Don't add new dependencies without asking first.
 
 ## Code style
@@ -44,6 +45,14 @@ Rules:
 
 ## Svelte
 Svelte 5 with runes only (`$state`, `$derived`, `$effect`, `$props`). Never use Svelte 4 syntax (`export let`, `$:`, stores for local state).
+
+## Design
+- UI spec: design/DESIGN.md. Tokens: design/theme.css. Reference mockups: design/mockups/.
+- Mockups are reference HTML: copy values and copy text, never markup. Build with shadcn-svelte + Tailwind tokens.
+- Only theme tokens and Tailwind's default scales (bg-background, text-muted-foreground, text-sm, p-5, rounded-card…). No raw hex, no arbitrary values like p-[13px].
+- Cards are the primary entity; source full text is temporary (DESIGN.md §5). Never delete or merge cards with review history without user confirmation.
+- Don't add UI that the spec doesn't describe; ask first.
+- Every interactive element needs a keyboard path and a visible focus ring.
 
 ## Roadmap
 1. Walking skeleton: one card read from SQLite through core, shown in the Svelte UI, with one acceptance test. Done.
@@ -54,9 +63,11 @@ Svelte 5 with runes only (`$state`, `$derived`, `$effect`, `$props`). Never use 
 For every slice:
 1. **Plan first.** Propose the slice design and wait for my approval.
 2. **Write the acceptance tests** (Given/When/Then style, against core or the slice handler).
-3. **Explain each test** in plain words: what behaviour it pins down and why. Wait for my review.
+3. **Explain each test** in plain words: what behaviour it pins down and why. Until the first usable version ships, don't wait for my review; I check results in the app and review the tests later.
 4. **Implement** until all tests pass. Keep the change limited to the slice. Simplest thing that passes, then refactor with tests green.
 5. **Summarise** what changed and anything I should look at closely in the diff.
+
+Acceptance tests are where I think and set requirements, so write them for me to read: domain language, one behaviour each, a descriptive name, and setup details hidden in small helpers.
 
 Once I've approved acceptance tests, never change, delete or weaken them to make them pass. If one looks wrong, stop and tell me why. Your own unit tests for internals go in `#[cfg(test)]` modules; mention them when you add them.
 
@@ -75,4 +86,3 @@ Run from the workspace root. `.env` points sqlx's compile-time checks at `dev.db
 
 ## Open decisions
 - Source parsing for import (text, Markdown, PDF, web pages).
-- How the LLM is called (user's API key vs subscription).
