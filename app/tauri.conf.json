@@ -18,11 +18,15 @@
   "app": {
     "windows": [
       {
-        "title": "Myosotis",
-        "width": 800,
-        "height": 600,
+        "title": "myosotis",
+        "width": 1180,
+        "height": 800,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "minWidth": 960,
+        "minHeight": 640,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {

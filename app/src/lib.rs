@@ -1,3 +1,5 @@
+mod claude_code;
+mod clock;
 pub mod features;
 pub mod storage;
 
@@ -5,6 +7,7 @@ use std::path::PathBuf;
 
 use tauri::Manager;
 
+use crate::features::{import_source, inbox, list_cards, review, today};
 use crate::storage::SqliteCardRepo;
 
 /// Composition root: wires storage into the slices and starts the app.
@@ -19,7 +22,20 @@ pub fn run() {
             app.manage(repo);
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![features::list_cards::list_cards])
+        .invoke_handler(tauri::generate_handler![
+            list_cards::list_cards,
+            today::today_summary,
+            review::review_session,
+            review::grade_card,
+            import_source::start_import,
+            import_source::retry_import,
+            inbox::inbox,
+            inbox::accept_draft,
+            inbox::accept_all_drafts,
+            inbox::edit_draft,
+            inbox::delete_draft,
+            inbox::discard_import,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Myosotis");
 }

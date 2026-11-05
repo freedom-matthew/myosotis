@@ -1,0 +1,198 @@
+/*
+ * myosotis — theme for shadcn-svelte (Tailwind CSS v4).
+ * Paste into src/app.css, replacing the theme block that `shadcn-svelte init` generated.
+ *
+ * Light = "Paper" (final). Dark = "Dusk" palette on the same design (see mockups/screens-dark).
+ * Spacing and type use Tailwind's DEFAULT scales: no custom spacing or font-size tokens.
+ * Radii follow shadcn's formula (sm/md/lg/xl from --radius) plus Tailwind's rounded-2xl and one card token.
+ *
+ * Fonts are self-hosted (the app is offline): bundle Geist, Geist Mono and Newsreader
+ * (Newsreader roman + its true italic) as local woff2 files or Fontsource packages.
+ * Never load fonts from Google at runtime.
+ */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/newsreader";
+@import "@fontsource-variable/newsreader/wght-italic.css";
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;        /* 10px → rounded-lg: buttons, inputs */
+  --card-radius: 1.25rem;    /* 20px → rounded-card: the flashcard */
+  --card-shadow: 0 1px 2px rgb(29 30 34 / 0.04), 0 18px 48px rgb(29 30 34 / 0.06);
+  --primary-shadow: 0 6px 16px rgb(62 111 176 / 0.22);
+
+  --background: #f6f4ef;     /* window / paper */
+  --foreground: #1d1e22;     /* ink */
+  --foreground-secondary: #4a4945; /* inactive nav, secondary labels */
+  --card: #ffffff;
+  --card-foreground: #1d1e22;
+  --card-answer: #34353a;    /* answer and excerpt text */
+  --card-border: #e8e4db;    /* hairline around the flashcard */
+  --popover: #ffffff;
+  --popover-foreground: #1d1e22;
+  --primary: #3e6fb0;        /* forget-me-not blue: primary action, progress, focus, selection */
+  --primary-foreground: #ffffff;
+  --primary-hover: #36649f;
+  --primary-strong: #2c5590; /* link hover, badge text on primary-tint */
+  --primary-soft: #eef3fa;   /* selected row / chosen option / merged-card suggestion */
+  --primary-tint: #dce6f4;   /* badges, revealed cloze, "keeps history" pill */
+  --secondary: #fbfaf7;      /* grade buttons, secondary buttons, excerpt boxes */
+  --secondary-foreground: #1d1e22;
+  --muted: #f4f1ea;          /* explanation box, status pills */
+  --muted-foreground: #66645f; /* captions; ≥ 4.5:1 on background and card */
+  --accent: #e5e1d8;         /* hover / active nav item */
+  --accent-foreground: #1d1e22;
+  --destructive: #9a4a12;    /* wrong answers (orange, never red/green alone) */
+  --warn-soft: #fbe6d4;
+  --warn-foreground: #8a3d0e;
+  --highlight: #f6e3a6;      /* source passage highlight in the Inbox */
+  --hook: #fbf4de;           /* memory hook box, "possible duplicate" pill */
+  --hook-foreground: #6e5a1e;
+  --border: #e6e2d9;
+  --input: #ddd8ce;
+  --ring: #3e6fb0;
+
+  --sidebar: #f0ede6;
+  --sidebar-foreground: #4a4945;
+  --sidebar-primary: #1d1e22;          /* "New source" button */
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e5e1d8;           /* active item */
+  --sidebar-accent-foreground: #1d1e22;
+  --sidebar-border: #e6e2d9;
+  --sidebar-ring: #3e6fb0;
+
+  --chart-1: #3e6fb0;   /* highlighted bar (today) */
+  --chart-2: #d9d4c9;   /* other bars */
+}
+
+.dark {
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 18px 48px rgb(0 0 0 / 0.35);
+  --primary-shadow: 0 6px 16px rgb(143 179 238 / 0.16);
+  --background: #121419;
+  --foreground: #e7e9ee;
+  --foreground-secondary: #b7bcc7;
+  --card: #1a1d24;
+  --card-foreground: #e7e9ee;
+  --card-answer: #c4c8d2;
+  --card-border: #2a2e37;
+  --popover: #1a1d24;
+  --popover-foreground: #e7e9ee;
+  --primary: #8fb3ee;
+  --primary-foreground: #10131a;
+  --primary-hover: #a6c3f2;
+  --primary-strong: #b5ccf4;
+  --primary-soft: #1d2633;
+  --primary-tint: #24324a;
+  --secondary: #1e2129;
+  --secondary-foreground: #e7e9ee;
+  --muted: #20242c;
+  --muted-foreground: #9aa0ad;
+  --accent: #262a33;
+  --accent-foreground: #e7e9ee;
+  --destructive: #e9a07a;
+  --warn-soft: #3a2418;
+  --warn-foreground: #f0b48c;
+  --highlight: #4a3f1e;
+  --hook: #2a2618;
+  --hook-foreground: #e3c878;
+  --border: #2a2e37;
+  --input: #343945;
+  --ring: #8fb3ee;
+
+  --sidebar: #15171c;
+  --sidebar-foreground: #b7bcc7;
+  --sidebar-primary: #e7e9ee;
+  --sidebar-primary-foreground: #10131a;
+  --sidebar-accent: #262a33;
+  --sidebar-accent-foreground: #e7e9ee;
+  --sidebar-border: #2a2e37;
+  --sidebar-ring: #8fb3ee;
+
+  --chart-1: #8fb3ee;
+  --chart-2: #343945;
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Newsreader Variable", Georgia, serif;   /* card content, page titles, the wordmark (italic) */
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace; /* intervals, counts, key hints */
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-answer: var(--card-answer);
+  --color-card-border: var(--card-border);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-tint: var(--primary-tint);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-foreground: var(--warn-foreground);
+  --color-highlight: var(--highlight);
+  --color-hook: var(--hook);
+  --color-hook-foreground: var(--hook-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius scale — the only radii used anywhere:
+     6 sm · 8 md · 10 lg · 14 xl · 16 2xl (Tailwind default) · 20 card · full */
+  --radius-sm: calc(var(--radius) - 4px);  /* 6  kbd, inline chips, highlights, chart bars */
+  --radius-md: calc(var(--radius) - 2px);  /* 8  nav items, ghost buttons, segmented items */
+  --radius-lg: var(--radius);              /* 10 buttons, inputs, small boxes inside a card */
+  --radius-xl: calc(var(--radius) + 4px);  /* 14 large buttons (CTA, Show answer, grades, answer options), list rows */
+  --radius-card: var(--card-radius);       /* 20 the flashcard */
+
+  --shadow-card: var(--card-shadow);
+  --shadow-primary: var(--primary-shadow);
+  --shadow-popover: 0 18px 40px rgb(29 30 34 / 0.14);
+
+  --ease-calm: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --animate-reveal: reveal 260ms var(--ease-calm) both;
+  --animate-grades: reveal 220ms 40ms var(--ease-calm) both;
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html, body { @apply bg-background text-foreground font-sans antialiased; }
+  /* Desktop feel: chrome is not selectable and uses the default cursor;
+     card content and inputs stay selectable. */
+  nav, button, [role="tab"], [role="radio"], kbd { user-select: none; }
+  button { cursor: default; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+  }
+}

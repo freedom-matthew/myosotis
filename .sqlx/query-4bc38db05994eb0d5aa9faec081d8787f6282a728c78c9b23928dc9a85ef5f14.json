@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE imports SET status = 'failed', error = 'The app closed before this finished.'\n             WHERE status = 'generating'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "4bc38db05994eb0d5aa9faec081d8787f6282a728c78c9b23928dc9a85ef5f14"
+}

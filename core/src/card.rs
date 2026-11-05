@@ -3,6 +3,8 @@ use std::future::Future;
 
 use serde::Serialize;
 
+pub type CardId = i64;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Card {
     pub question: String,

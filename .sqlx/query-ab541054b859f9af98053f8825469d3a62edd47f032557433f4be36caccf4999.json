@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT due FROM cards WHERE status = 'active'",
+  "describe": {
+    "columns": [
+      {
+        "name": "due",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "due"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ab541054b859f9af98053f8825469d3a62edd47f032557433f4be36caccf4999"
+}
