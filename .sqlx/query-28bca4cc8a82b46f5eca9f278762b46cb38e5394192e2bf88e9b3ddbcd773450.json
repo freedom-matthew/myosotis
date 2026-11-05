@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM card WHERE id = ? AND status = 'draft'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "28bca4cc8a82b46f5eca9f278762b46cb38e5394192e2bf88e9b3ddbcd773450"
+}

@@ -1,0 +1,122 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses,\n                    phase, last_review\n             FROM card WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "due",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "due"
+          }
+        }
+      },
+      {
+        "name": "stability",
+        "ordinal": 1,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "stability"
+          }
+        }
+      },
+      {
+        "name": "difficulty",
+        "ordinal": 2,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "difficulty"
+          }
+        }
+      },
+      {
+        "name": "elapsed_days",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "elapsed_days"
+          }
+        }
+      },
+      {
+        "name": "scheduled_days",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "scheduled_days"
+          }
+        }
+      },
+      {
+        "name": "reps",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "reps"
+          }
+        }
+      },
+      {
+        "name": "lapses",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "lapses"
+          }
+        }
+      },
+      {
+        "name": "phase",
+        "ordinal": 7,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "phase"
+          }
+        }
+      },
+      {
+        "name": "last_review",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "last_review"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a95bb1dff98fccab826817ab0a41f4292af88c382ba4df5802a986e3fada7eda"
+}

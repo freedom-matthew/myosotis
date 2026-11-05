@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO card (question, answer, status, created_at)\n                   VALUES (?, ?, 'draft', (SELECT created_at FROM import WHERE id = ?))\n                   RETURNING id AS \"id!\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "63daf77cd2dd497c3e18fde9d826e2196e98b01da770702fd0dd1e9e3436b3a1"
+}

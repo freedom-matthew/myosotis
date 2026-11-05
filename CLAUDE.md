@@ -41,6 +41,7 @@ Rules:
 
 ## Code style
 - Always annotate the type of every variable binding, even where it can be inferred: `let cards: Vec<Card> = ...` in Rust, `const cards: Promise<Card[]> = ...` in TypeScript. I want to read types in the code, not rely on IDE hints.
+- Database tables have singular names (`card`, not `cards`). Applied migrations are never edited; a change goes in a new one.
 - Never annotate closure parameters (`|error| ...`, not `|error: RepoError| ...`); it makes them unreadable.
 
 ## Svelte

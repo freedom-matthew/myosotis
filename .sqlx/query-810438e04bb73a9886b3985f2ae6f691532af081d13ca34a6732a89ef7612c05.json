@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE card SET status = 'active' WHERE id = ? AND status = 'draft'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "810438e04bb73a9886b3985f2ae6f691532af081d13ca34a6732a89ef7612c05"
+}

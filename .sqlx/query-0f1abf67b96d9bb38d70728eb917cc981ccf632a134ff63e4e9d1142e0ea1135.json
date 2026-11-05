@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO origin (card_id, import_id, source_title, excerpt, imported_at)\n                 SELECT ?, id, title, ?, created_at FROM import WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "0f1abf67b96d9bb38d70728eb917cc981ccf632a134ff63e4e9d1142e0ea1135"
+}

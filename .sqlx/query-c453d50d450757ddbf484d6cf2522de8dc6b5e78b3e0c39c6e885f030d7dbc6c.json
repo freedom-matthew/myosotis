@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO import (title, full_text, status, depth, focus, created_at)\n               VALUES (?, ?, ?, ?, ?, ?)\n               RETURNING id AS \"id!\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c453d50d450757ddbf484d6cf2522de8dc6b5e78b3e0c39c6e885f030d7dbc6c"
+}

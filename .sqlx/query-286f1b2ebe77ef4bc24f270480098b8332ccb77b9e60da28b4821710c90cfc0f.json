@@ -1,0 +1,76 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT i.id AS \"id!\", i.title, i.status, i.created_at,\n                      COUNT(CASE WHEN c.status = 'active' THEN 1 END) AS \"card_count!: i64\",\n                      COUNT(CASE WHEN c.status = 'draft' THEN 1 END) AS \"draft_count!: i64\"\n               FROM import i\n               LEFT JOIN origin o ON o.import_id = i.id\n               LEFT JOIN card c ON c.id = o.card_id\n               GROUP BY i.id\n               ORDER BY i.id DESC\n               LIMIT ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "status",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "name": "created_at",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "name": "card_count!: i64",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "draft_count!: i64",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "286f1b2ebe77ef4bc24f270480098b8332ccb77b9e60da28b4821710c90cfc0f"
+}

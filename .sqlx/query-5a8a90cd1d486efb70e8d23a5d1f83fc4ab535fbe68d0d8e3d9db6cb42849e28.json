@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT question, answer FROM card WHERE status = 'active' ORDER BY id",
+  "describe": {
+    "columns": [
+      {
+        "name": "question",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "answer",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "answer"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "5a8a90cd1d486efb70e8d23a5d1f83fc4ab535fbe68d0d8e3d9db6cb42849e28"
+}

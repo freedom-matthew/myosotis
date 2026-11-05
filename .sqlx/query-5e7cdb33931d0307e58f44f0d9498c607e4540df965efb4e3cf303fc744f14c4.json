@@ -1,0 +1,201 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"id!\", c.question, c.answer, c.due, c.stability, c.difficulty,\n                      c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,\n                      c.suspended AS \"suspended: bool\",\n                      o.source_title AS \"source_title?\", o.excerpt AS \"excerpt?\",\n                      (SELECT COUNT(*) FROM review r WHERE r.card_id = c.id)\n                          AS \"review_count!: i64\"\n               FROM card c\n               LEFT JOIN origin o\n                 ON o.id = (SELECT MIN(id) FROM origin WHERE card_id = c.id)\n               WHERE c.status = 'active'\n               ORDER BY c.id DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "question",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "answer",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "answer"
+          }
+        }
+      },
+      {
+        "name": "due",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "due"
+          }
+        }
+      },
+      {
+        "name": "stability",
+        "ordinal": 4,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "stability"
+          }
+        }
+      },
+      {
+        "name": "difficulty",
+        "ordinal": 5,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "difficulty"
+          }
+        }
+      },
+      {
+        "name": "elapsed_days",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "elapsed_days"
+          }
+        }
+      },
+      {
+        "name": "scheduled_days",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "scheduled_days"
+          }
+        }
+      },
+      {
+        "name": "reps",
+        "ordinal": 8,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "reps"
+          }
+        }
+      },
+      {
+        "name": "lapses",
+        "ordinal": 9,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "lapses"
+          }
+        }
+      },
+      {
+        "name": "phase",
+        "ordinal": 10,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "phase"
+          }
+        }
+      },
+      {
+        "name": "last_review",
+        "ordinal": 11,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "last_review"
+          }
+        }
+      },
+      {
+        "name": "suspended: bool",
+        "ordinal": 12,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "suspended"
+          }
+        }
+      },
+      {
+        "name": "source_title?",
+        "ordinal": 13,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origin",
+            "name": "source_title"
+          }
+        }
+      },
+      {
+        "name": "excerpt?",
+        "ordinal": 14,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origin",
+            "name": "excerpt"
+          }
+        }
+      },
+      {
+        "name": "review_count!: i64",
+        "ordinal": 15,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "5e7cdb33931d0307e58f44f0d9498c607e4540df965efb4e3cf303fc744f14c4"
+}

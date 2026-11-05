@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT due FROM card WHERE status = 'active' AND suspended = 0",
+  "describe": {
+    "columns": [
+      {
+        "name": "due",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "due"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "068b6acd15744112e12026e42e67a3a70c5931672190307d04b8f7d1944a9480"
+}

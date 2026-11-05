@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"id!\" FROM card c\n               JOIN origin o ON o.card_id = c.id\n               WHERE c.status = 'draft' AND o.import_id = ?\n               ORDER BY c.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "14769f49b459fd5454d760740345842ccb05e237efdefecbcb738c5902d7ac78"
+}

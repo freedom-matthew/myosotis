@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT import_id FROM origin WHERE card_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "import_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "origin",
+            "name": "import_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "597abf3881cc0effa94a8341c2c0d66dd79051c2f0d92c73fbf9464e4ba6e499"
+}

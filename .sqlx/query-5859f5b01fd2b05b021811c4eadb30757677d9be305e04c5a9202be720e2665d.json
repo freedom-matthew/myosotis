@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT title, full_text, depth, focus FROM import WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "title",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "full_text",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "full_text"
+          }
+        }
+      },
+      {
+        "name": "depth",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "depth"
+          }
+        }
+      },
+      {
+        "name": "focus",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "focus"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "5859f5b01fd2b05b021811c4eadb30757677d9be305e04c5a9202be720e2665d"
+}

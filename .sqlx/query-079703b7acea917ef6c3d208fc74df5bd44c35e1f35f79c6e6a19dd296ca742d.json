@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE import SET status = 'done', full_text = NULL\n             WHERE id = ? AND status = 'in_inbox' AND NOT EXISTS (\n                 SELECT 1 FROM origin o JOIN card c ON c.id = o.card_id\n                 WHERE o.import_id = import.id AND c.status = 'draft'\n             )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "079703b7acea917ef6c3d208fc74df5bd44c35e1f35f79c6e6a19dd296ca742d"
+}

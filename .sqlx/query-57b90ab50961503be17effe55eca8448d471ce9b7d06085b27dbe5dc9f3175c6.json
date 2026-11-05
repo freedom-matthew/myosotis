@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"id!\", c.question, c.answer, o.excerpt AS \"excerpt?\"\n                   FROM card c\n                   JOIN origin o ON o.card_id = c.id\n                   WHERE c.status = 'draft' AND o.import_id = ?\n                   ORDER BY c.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "question",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "answer",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "answer"
+          }
+        }
+      },
+      {
+        "name": "excerpt?",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origin",
+            "name": "excerpt"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "57b90ab50961503be17effe55eca8448d471ce9b7d06085b27dbe5dc9f3175c6"
+}

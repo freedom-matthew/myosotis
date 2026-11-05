@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM import WHERE id = ? AND status = 'failed'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "67be6e4c4e1cd6fd981ba9059f43c612c8f5ad64b3c388f4101c3cdbb27c6309"
+}

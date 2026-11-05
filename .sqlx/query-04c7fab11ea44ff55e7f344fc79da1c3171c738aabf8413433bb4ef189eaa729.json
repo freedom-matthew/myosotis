@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.question, c.answer, o.excerpt AS \"excerpt?\"\n               FROM card c\n               LEFT JOIN origin o\n                 ON o.id = (SELECT MIN(id) FROM origin WHERE card_id = c.id)\n               WHERE c.id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "question",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "answer",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "answer"
+          }
+        }
+      },
+      {
+        "name": "excerpt?",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origin",
+            "name": "excerpt"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "04c7fab11ea44ff55e7f344fc79da1c3171c738aabf8413433bb4ef189eaa729"
+}
