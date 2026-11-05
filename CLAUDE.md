@@ -46,8 +46,8 @@ Rules:
 Svelte 5 with runes only (`$state`, `$derived`, `$effect`, `$props`). Never use Svelte 4 syntax (`export let`, `$:`, stores for local state).
 
 ## Roadmap
-1. Walking skeleton: one card read from SQLite through core, shown in the Svelte UI, with one acceptance test. **← current**
-2. Review: due cards and FSRS scheduling (pure domain logic, ideal for TDD).
+1. Walking skeleton: one card read from SQLite through core, shown in the Svelte UI, with one acceptance test. Done.
+2. Review: due cards and FSRS scheduling (pure domain logic, ideal for TDD). **← current**
 3. Import: parse a source, send it to an LLM, get cards back. AI comes last so the core never depends on it.
 
 ## Workflow: ATDD
