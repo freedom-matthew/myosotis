@@ -1,0 +1,40 @@
+Software Requirements
+Third Edition
+Karl Wiegers and Joy Beatty
+Published by Microsoft Press, Redmond, Washington, 2013
+
+Contents
+Part I  Software requirements: What, why, and who
+  Chapter 1  The essential software requirement
+  Chapter 2  Requirements from the customer's perspective
+Part II  Requirements development
+  Chapter 5  Establishing the business requirements
+  Chapter 7  Requirements elicitation
+Part III  Requirements for specific project classes
+Glossary
+References
+Index
+
+Preface
+The first edition of this book appeared in 1999, and the second in 2003. This third edition adds new chapters on agile projects and on business analytics, and reflects what we have learned from our consulting work. Karl has been a software engineer for over thirty years, and Joy has led analysts at many companies. We wrote this book for business analysts, developers and project managers. Readers new to the field should begin with Part I; experienced analysts may prefer to dip into specific chapters. We thank our reviewers and our editors at Microsoft Press.
+
+Chapter 1
+The essential software requirement
+
+Taking your requirements' pulse
+Requirements have three levels. Business requirements describe why the organisation is undertaking the project: the benefits it hopes to gain. User requirements describe the goals or tasks users must be able to perform with the product. Functional requirements specify the behaviours the product must exhibit under specific conditions, and they are what developers must implement. Each level must align with the one above it, otherwise teams build features that nobody asked for.
+
+Good practices
+Many teams treat elicitation as collecting a list of features from stakeholders. That fails because users describe solutions they can imagine rather than the problems they need solved. Asking what users need to accomplish, rather than what they want the system to do, exposes the real need and leaves room for better designs. Errors made during requirements are the most expensive to fix, because by the time they are found, design, code and tests have all been built on the wrong assumption. Fixing a defect found after release can cost many times more than fixing it while the requirement is written.
+
+Scope creep
+Requirements will change. The goal is not to prevent change but to manage it. When a project has no defined baseline, every new request gets added without anyone weighing it against the schedule, so the project slowly grows beyond what the team can deliver. A baseline is an agreed snapshot of the requirements at a point in time. It gives teams a reference, so the impact of each proposed change can be assessed before it is accepted.
+
+Chapter 2
+Requirements from the customer's perspective
+
+The expectation gap
+A wide gap often grows between what customers expect and what developers deliver, because the two groups talk intensively at the start and the end of a project but little in between. Short, frequent contact, for example through prototypes shown to real users, closes this gap early while changes are still cheap.
+
+Next steps
+Review your current project's requirements. See the Glossary for definitions and the References for further reading.
