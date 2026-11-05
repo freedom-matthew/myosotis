@@ -3,6 +3,7 @@ use myosotis_core::{
     Card, CardExplainer, CardId, DueCard, ExplanationRequest, GenerateError, Grade, RepoError,
     ReviewRepo, Schedule, SessionCard, plan_session, session_horizon,
 };
+use myosotis_core::{Settings, SettingsRepo};
 use tauri::State;
 
 use crate::claude_code::ClaudeCode;
@@ -10,23 +11,32 @@ use crate::clock;
 use crate::storage::SqliteCardRepo;
 
 pub async fn session(
-    repo: &impl ReviewRepo,
+    repo: &(impl ReviewRepo + SettingsRepo),
     now: DateTime<Utc>,
     start_of_day: DateTime<Utc>,
 ) -> Result<Vec<SessionCard>, RepoError> {
     let cards: Vec<DueCard> = repo.due_cards(session_horizon(now)).await?;
     let new_started: usize = repo.new_cards_started_since(start_of_day).await?;
-    Ok(plan_session(cards, new_started, now))
+    let reviewed_today: Vec<CardId> = repo.cards_reviewed_since(start_of_day).await?;
+    let settings: Settings = repo.load_settings().await?;
+    Ok(plan_session(
+        cards,
+        new_started,
+        &reviewed_today,
+        &settings,
+        now,
+    ))
 }
 
 pub async fn grade(
-    repo: &impl ReviewRepo,
+    repo: &(impl ReviewRepo + SettingsRepo),
     card: CardId,
     grade: Grade,
     now: DateTime<Utc>,
 ) -> Result<(), RepoError> {
     let before: Schedule = repo.schedule_of(card).await?;
-    let after: Schedule = before.after(grade, now);
+    let settings: Settings = repo.load_settings().await?;
+    let after: Schedule = before.after(grade, now, settings.desired_retention());
     repo.record_review(card, grade, &before, &after, now).await
 }
 

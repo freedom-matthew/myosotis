@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use myosotis_core::{CardId, LibraryCard, LibraryRepo, RepoError};
+use myosotis_core::{CardId, LibraryCard, LibraryRepo, RepoError, StoredCard};
 use tauri::State;
 
 use crate::storage::SqliteCardRepo;
@@ -8,7 +8,7 @@ pub async fn list(
     repo: &impl LibraryRepo,
     now: DateTime<Utc>,
 ) -> Result<Vec<LibraryCard>, RepoError> {
-    let cards: Vec<myosotis_core::StoredCard> = repo.all_cards().await?;
+    let cards: Vec<StoredCard> = repo.all_cards().await?;
     Ok(cards
         .into_iter()
         .map(|card| card.into_library_card(now))

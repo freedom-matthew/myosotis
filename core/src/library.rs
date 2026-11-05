@@ -3,7 +3,7 @@ use std::future::Future;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::card::{CardId, RepoError};
+use crate::card::{CardId, CardKind, RepoError};
 use crate::review::DueCard;
 
 /// A card as storage hands it to the Library.
@@ -18,6 +18,7 @@ pub struct StoredCard {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct LibraryCard {
     pub id: CardId,
+    pub kind: CardKind,
     pub question: String,
     pub answer: String,
     pub source_title: Option<String>,
@@ -25,6 +26,7 @@ pub struct LibraryCard {
     pub is_new: bool,
     pub suspended: bool,
     pub review_count: i64,
+    pub lapses: i32,
     pub recall_percent: Option<u8>,
     pub next_due: DateTime<Utc>,
 }
@@ -33,9 +35,11 @@ impl StoredCard {
     pub fn into_library_card(self, now: DateTime<Utc>) -> LibraryCard {
         LibraryCard {
             is_new: self.due.schedule.is_new(),
+            lapses: self.due.schedule.lapses,
             recall_percent: self.due.schedule.recall_percent(now),
             next_due: self.due.schedule.due,
             id: self.due.id,
+            kind: self.due.kind,
             question: self.due.card.question,
             answer: self.due.card.answer,
             source_title: self.due.source_title,

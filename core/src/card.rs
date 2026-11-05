@@ -1,9 +1,37 @@
 use std::error::Error;
 use std::future::Future;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 pub type CardId = i64;
+
+/// How a card is reviewed. The `Cloze` question holds its gap as `{{text}}`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CardKind {
+    #[default]
+    Qa,
+    Cloze,
+    Reverse,
+}
+
+impl CardKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            CardKind::Qa => "qa",
+            CardKind::Cloze => "cloze",
+            CardKind::Reverse => "reverse",
+        }
+    }
+
+    pub fn parse(value: &str) -> Self {
+        match value {
+            "cloze" => CardKind::Cloze,
+            "reverse" => CardKind::Reverse,
+            _ => CardKind::Qa,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Card {

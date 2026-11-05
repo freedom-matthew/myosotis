@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO not_duplicate (card_a, card_b) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "fbfab09303430df17f452342b34a29f9cf9cd6c1a08b352511024af9efeed9c2"
+}

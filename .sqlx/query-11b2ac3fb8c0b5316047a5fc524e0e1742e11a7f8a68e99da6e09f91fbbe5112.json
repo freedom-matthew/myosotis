@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT card_a, card_b FROM not_duplicate",
+  "describe": {
+    "columns": [
+      {
+        "name": "card_a",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "not_duplicate",
+            "name": "card_a"
+          }
+        }
+      },
+      {
+        "name": "card_b",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "not_duplicate",
+            "name": "card_b"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "11b2ac3fb8c0b5316047a5fc524e0e1742e11a7f8a68e99da6e09f91fbbe5112"
+}

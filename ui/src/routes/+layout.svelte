@@ -1,18 +1,15 @@
 <script lang="ts">
+	import { Toaster } from 'svelte-sonner';
 	import '../app.css';
+	import { getSettings, type Settings } from '#lib/api.js';
+	import { applyTheme, watchSystemTheme } from '#lib/theme.js';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
 
-	// Follows the system theme until Settings exists.
 	$effect(() => {
-		const query: MediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
-		const apply = (): void => {
-			document.documentElement.classList.toggle('dark', query.matches);
-		};
-		apply();
-		query.addEventListener('change', apply);
-		return () => query.removeEventListener('change', apply);
+		getSettings().then((settings: Settings) => applyTheme(settings.theme));
+		return watchSystemTheme();
 	});
 </script>
 
@@ -20,3 +17,5 @@
 <div data-tauri-drag-region class="fixed inset-x-0 top-0 z-50 h-7"></div>
 
 {@render children()}
+
+<Toaster position="bottom-center" />

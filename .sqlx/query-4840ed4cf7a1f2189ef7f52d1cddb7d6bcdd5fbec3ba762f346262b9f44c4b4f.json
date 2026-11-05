@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE origin SET card_id = ? WHERE card_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4840ed4cf7a1f2189ef7f52d1cddb7d6bcdd5fbec3ba762f346262b9f44c4b4f"
+}

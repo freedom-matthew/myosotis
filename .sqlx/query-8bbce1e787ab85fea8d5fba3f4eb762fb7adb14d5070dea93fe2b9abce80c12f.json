@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT parts_done FROM import WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "parts_done",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "parts_done"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8bbce1e787ab85fea8d5fba3f4eb762fb7adb14d5070dea93fe2b9abce80c12f"
+}

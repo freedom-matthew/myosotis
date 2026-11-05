@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { todaySummary, type RecentImport, type TodaySummary } from '#lib/api.js';
+	import {
+		claudeStatus,
+		todaySummary,
+		type ClaudeStatus,
+		type RecentImport,
+		type TodaySummary
+	} from '#lib/api.js';
 	import Notice from '#lib/components/notice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Kbd } from '#lib/components/ui/kbd/index.js';
@@ -11,6 +17,7 @@
 
 	let summary: TodaySummary | null = $state<TodaySummary | null>(null);
 	let error: string | null = $state(null);
+	let claudeReady: boolean = $state(true);
 
 	const due: number = $derived(summary ? summary.due_reviews + summary.due_new : 0);
 	const dateLabel: string = new Date().toLocaleDateString('en-GB', {
@@ -23,6 +30,7 @@
 		todaySummary()
 			.then((result: TodaySummary) => (summary = result))
 			.catch((reason: unknown) => (error = String(reason)));
+		claudeStatus().then((status: ClaudeStatus) => (claudeReady = status.logged_in));
 	});
 
 	function barHeight(count: number, forecast: number[]): string {
@@ -69,6 +77,13 @@
 		<Notice>{error}</Notice>
 	{/if}
 
+	{#if !claudeReady}
+		<p class="rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
+			Claude Code isn't connected, so new sources can't become cards.
+			<a href="/settings" class="text-primary underline">Check Settings</a>
+		</p>
+	{/if}
+
 	{#if summary}
 		<section class="flex flex-col gap-3.5">
 			<span class="text-sm text-muted-foreground">{dateLabel}</span>
@@ -81,11 +96,16 @@
 					{summary.minutes === 1 ? 'minute' : 'minutes'} · {summary.due_reviews}
 					{summary.due_reviews === 1 ? 'review' : 'reviews'} and {summary.due_new} new
 				</p>
-				<div class="mt-2.5">
+				<div class="mt-2.5 flex flex-wrap items-center gap-4">
 					<Button href="/review" class="h-auto gap-3.5 rounded-xl px-5 py-3 text-base shadow-primary">
 						Start review
 						<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">Space</Kbd>
 					</Button>
+					{#if summary.due_reviews > 0 && summary.due_new > 0}
+						<a href="/review?skip_new=1" class="text-sm text-foreground-secondary underline">
+							Only reviews, skip new
+						</a>
+					{/if}
 				</div>
 			{:else}
 				<h1 class="font-serif text-5xl leading-[1.1] font-normal">Nothing due today.</h1>
@@ -93,11 +113,20 @@
 					<p class="text-base text-muted-foreground">
 						Next card: {nextDueLabel(summary.next_due)}
 					</p>
+				{:else}
+					<p class="text-base text-muted-foreground">
+						Start with something worth keeping: an article, a chapter, your notes.
+					</p>
+					<div class="mt-2.5">
+						<Button href="/new" class="h-auto rounded-xl px-5 py-3 text-base shadow-primary">
+							New source
+						</Button>
+					</div>
 				{/if}
 			{/if}
 		</section>
 
-		<section class="grid grid-cols-2 gap-3.5">
+		<section class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
 			<a
 				href="/inbox"
 				class="flex flex-col gap-2 rounded-2xl border bg-card p-5 transition-colors hover:border-input"
@@ -125,6 +154,22 @@
 					{/each}
 				</div>
 			</div>
+			<div class="flex flex-col gap-2 rounded-2xl border bg-card p-5">
+				<span class="text-xs text-muted-foreground">Retention, 30 days</span>
+				<span class="font-mono text-2xl font-medium">
+					{summary.retention_percent === null ? '—' : `${summary.retention_percent}%`}
+				</span>
+			</div>
+			<a
+				href="/library?filter=slipping"
+				class="flex flex-col gap-2 rounded-2xl border bg-card p-5 transition-colors hover:border-input"
+			>
+				<span class="text-xs text-muted-foreground">Keeps slipping</span>
+				<span class="text-2xl font-medium">
+					{summary.slipping_count === 1 ? '1 card' : `${summary.slipping_count} cards`}
+				</span>
+				<span class="text-xs text-muted-foreground">Rewrite or suspend them</span>
+			</a>
 		</section>
 
 		{#if summary.recent_imports.length > 0}

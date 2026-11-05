@@ -4,11 +4,9 @@ use chrono::{DateTime, Duration, Utc};
 use rs_fsrs::{FSRS, Parameters, Rating, SchedulingInfo, State};
 use serde::{Deserialize, Serialize};
 
-use crate::card::{Card, CardId, RepoError};
+use crate::card::{Card, CardId, CardKind, RepoError};
 use crate::explain::ExplanationRequest;
-
-/// New cards started per day. Becomes a setting once Settings exists.
-const NEW_CARDS_PER_DAY: usize = 20;
+use crate::settings::Settings;
 
 /// Cards that return within this window are shown now rather than ending the session.
 const LEARN_AHEAD_MINUTES: i64 = 20;
@@ -114,17 +112,17 @@ impl Schedule {
         Some((self.to_fsrs().get_retrievability(now) * 100.0).round() as u8)
     }
 
-    pub fn after(&self, grade: Grade, now: DateTime<Utc>) -> Schedule {
-        let info: SchedulingInfo = scheduler().next(self.to_fsrs(), now, grade.rating());
+    pub fn after(&self, grade: Grade, now: DateTime<Utc>, retention: f64) -> Schedule {
+        let info: SchedulingInfo = scheduler(retention).next(self.to_fsrs(), now, grade.rating());
         Schedule::from_fsrs(&info.card)
     }
 
-    pub fn previews(&self, now: DateTime<Utc>) -> Vec<GradePreview> {
+    pub fn previews(&self, now: DateTime<Utc>, retention: f64) -> Vec<GradePreview> {
         Grade::ALL
             .iter()
             .map(|grade| GradePreview {
                 grade: *grade,
-                interval: format_interval(self.after(*grade, now).due - now),
+                interval: format_interval(self.after(*grade, now, retention).due - now),
             })
             .collect()
     }
@@ -168,8 +166,11 @@ impl Schedule {
     }
 }
 
-fn scheduler() -> FSRS {
-    FSRS::new(Parameters::default())
+fn scheduler(retention: f64) -> FSRS {
+    FSRS::new(Parameters {
+        request_retention: retention,
+        ..Parameters::default()
+    })
 }
 
 fn format_interval(interval: Duration) -> String {
@@ -194,6 +195,8 @@ pub struct GradePreview {
 #[derive(Debug, Clone, PartialEq)]
 pub struct DueCard {
     pub id: CardId,
+    pub kind: CardKind,
+    pub sibling: Option<CardId>,
     pub card: Card,
     pub source_title: Option<String>,
     pub excerpt: Option<String>,
@@ -204,6 +207,7 @@ pub struct DueCard {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct SessionCard {
     pub id: CardId,
+    pub kind: CardKind,
     pub question: String,
     pub answer: String,
     pub source_title: Option<String>,
@@ -217,9 +221,14 @@ pub struct SessionCard {
 pub fn plan_session(
     cards: Vec<DueCard>,
     new_started_today: usize,
+    reviewed_today: &[CardId],
+    settings: &Settings,
     now: DateTime<Utc>,
 ) -> Vec<SessionCard> {
-    let new_allowed: usize = NEW_CARDS_PER_DAY.saturating_sub(new_started_today);
+    let new_allowed: usize =
+        (settings.new_cards_per_day as usize).saturating_sub(new_started_today);
+    let retention: f64 = settings.desired_retention();
+    let cards: Vec<DueCard> = apart_from_siblings(cards, reviewed_today);
     let (new_cards, seen_cards): (Vec<DueCard>, Vec<DueCard>) =
         cards.into_iter().partition(|card| card.schedule.is_new());
     let (reviews, coming_back): (Vec<DueCard>, Vec<DueCard>) = seen_cards
@@ -230,8 +239,23 @@ pub fn plan_session(
         .into_iter()
         .chain(new_cards.into_iter().take(new_allowed))
         .chain(coming_back)
-        .map(|card| to_session_card(card, now))
+        .map(|card| to_session_card(card, retention, now))
         .collect()
+}
+
+/// Keeps the two directions of a reverse card out of the same day, because seeing one
+/// gives away the other.
+fn apart_from_siblings(cards: Vec<DueCard>, reviewed_today: &[CardId]) -> Vec<DueCard> {
+    let mut taken: Vec<CardId> = reviewed_today.to_vec();
+    let mut kept: Vec<DueCard> = Vec::with_capacity(cards.len());
+    for card in cards {
+        if card.sibling.is_some_and(|sibling| taken.contains(&sibling)) {
+            continue;
+        }
+        taken.push(card.id);
+        kept.push(card);
+    }
+    kept
 }
 
 /// How far ahead storage must look so `plan_session` can see cards coming back soon.
@@ -239,11 +263,12 @@ pub fn session_horizon(now: DateTime<Utc>) -> DateTime<Utc> {
     now + Duration::minutes(LEARN_AHEAD_MINUTES)
 }
 
-fn to_session_card(due: DueCard, now: DateTime<Utc>) -> SessionCard {
+fn to_session_card(due: DueCard, retention: f64, now: DateTime<Utc>) -> SessionCard {
     SessionCard {
         id: due.id,
+        kind: due.kind,
         is_new: due.schedule.is_new(),
-        grades: due.schedule.previews(now),
+        grades: due.schedule.previews(now, retention),
         question: due.card.question,
         answer: due.card.answer,
         source_title: due.source_title,
@@ -263,6 +288,20 @@ pub trait ReviewRepo {
         &self,
         since: DateTime<Utc>,
     ) -> impl Future<Output = Result<usize, RepoError>> + Send;
+
+    fn cards_reviewed_since(
+        &self,
+        since: DateTime<Utc>,
+    ) -> impl Future<Output = Result<Vec<CardId>, RepoError>> + Send;
+
+    /// Share of due reviews since then that were remembered, if there were any.
+    fn retention_since(
+        &self,
+        since: DateTime<Utc>,
+    ) -> impl Future<Output = Result<Option<u8>, RepoError>> + Send;
+
+    /// Cards forgotten again and again.
+    fn slipping_count(&self) -> impl Future<Output = Result<i64, RepoError>> + Send;
 
     fn schedule_of(&self, card: CardId)
     -> impl Future<Output = Result<Schedule, RepoError>> + Send;

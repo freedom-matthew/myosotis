@@ -66,3 +66,34 @@ async fn the_seven_day_forecast_places_each_card_on_its_due_day() {
     // then today's bar has one card and the rest of the week is empty
     assert_eq!(summary.forecast, vec![1, 0, 0, 0, 0, 0, 0]);
 }
+
+#[tokio::test]
+async fn retention_is_the_share_of_due_reviews_i_remembered() {
+    // given two learned cards that come due, one remembered and one forgotten
+    let repo: SqliteCardRepo = collection_with_cards(2).await;
+    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
+    grade(&repo, &session[0], Grade::Easy, monday()).await;
+    grade(&repo, &session[1], Grade::Easy, monday()).await;
+    let later: DateTime<Utc> = days_later(monday(), 20);
+    let due: Vec<SessionCard> = session_at(&repo, later).await;
+    grade(&repo, &due[0], Grade::Good, later).await;
+    grade(&repo, &due[1], Grade::Again, later).await;
+
+    // when I open Today
+    let summary: TodaySummary = summary_at(&repo, later).await;
+
+    // then retention is 50%
+    assert_eq!(summary.retention_percent, Some(50));
+}
+
+#[tokio::test]
+async fn there_is_no_retention_figure_before_any_due_reviews() {
+    // given a collection with only new cards
+    let repo: SqliteCardRepo = collection_with_cards(1).await;
+
+    // when I open Today
+    let summary: TodaySummary = summary_at(&repo, monday()).await;
+
+    // then there is no figure to show
+    assert_eq!(summary.retention_percent, None);
+}

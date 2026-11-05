@@ -3,7 +3,7 @@ mod common;
 use common::*;
 use myosotis_app::features::{import_source, inbox};
 use myosotis_app::storage::SqliteCardRepo;
-use myosotis_core::{DraftCard, Grade, ImportId, ImportStatus, InboxImport, SessionCard};
+use myosotis_core::{Card, DraftCard, Grade, ImportId, ImportStatus, InboxImport, SessionCard};
 
 #[tokio::test]
 async fn generated_cards_wait_in_the_inbox_and_are_not_reviewed_yet() {
@@ -166,4 +166,92 @@ async fn accepting_a_card_twice_does_not_reset_what_i_learned() {
 
     // then it stays scheduled for later
     assert!(session_at(&repo, monday()).await.is_empty());
+}
+
+#[tokio::test]
+async fn a_long_source_is_worked_through_in_parts() {
+    // given a source long enough for three parts
+    let repo: SqliteCardRepo = empty_collection().await;
+    let generator: FakeGenerator = FakeGenerator::producing(&["Cue?"]);
+
+    // when it is imported
+    import_text_with(&repo, &generator, &three_part_source()).await;
+
+    // then the AI was called once per part, and every part's cards are in the Inbox
+    assert_eq!(generator.calls(), 3);
+    assert_eq!(drafts_in_inbox(&repo).await.len(), 3);
+    assert_eq!(the_inbox(&repo).await[0].parts_done, 3);
+}
+
+#[tokio::test]
+async fn cards_from_finished_parts_survive_a_failure_and_retry_resumes() {
+    // given the AI drops out on the second of three parts
+    let repo: SqliteCardRepo = empty_collection().await;
+    let flaky: FakeGenerator = FakeGenerator::producing(&["Cue?"]).failing_on_call(2);
+    let source: String = three_part_source();
+    let import: ImportId = import_text_with(&repo, &flaky, &source).await;
+
+    // then the first part's card is kept, and the failure is shown
+    assert_eq!(drafts_in_inbox(&repo).await.len(), 1);
+    assert_eq!(the_inbox(&repo).await[0].status, ImportStatus::Failed);
+
+    // and when I retry, only the two missing parts are generated
+    let working: FakeGenerator = FakeGenerator::producing(&["Cue?"]);
+    import_source::generate(&repo, &working, import)
+        .await
+        .unwrap();
+    assert_eq!(working.calls(), 2);
+    assert_eq!(drafts_in_inbox(&repo).await.len(), 3);
+}
+
+#[tokio::test]
+async fn rewrite_replaces_a_card_in_the_inbox() {
+    // given a weak generated card
+    let repo: SqliteCardRepo = empty_collection().await;
+    import_source_with(&repo, &FakeGenerator::producing(&["Weak?"])).await;
+    let drafts: Vec<DraftCard> = drafts_in_inbox(&repo).await;
+    let rewriter: FakeRewriter = FakeRewriter {
+        better: Card::new("Why do cues trigger habits?", "They start the routine"),
+    };
+
+    // when I ask for a rewrite
+    inbox::rewrite(&repo, &rewriter, drafts[0].id)
+        .await
+        .unwrap();
+
+    // then the Inbox shows the better version
+    let drafts: Vec<DraftCard> = drafts_in_inbox(&repo).await;
+    assert_eq!(drafts[0].question, "Why do cues trigger habits?");
+    assert_eq!(drafts[0].answer, "They start the routine");
+}
+
+#[tokio::test]
+async fn discarding_a_part_failed_import_keeps_the_cards_already_made() {
+    // given the AI dropped out after making one card
+    let repo: SqliteCardRepo = empty_collection().await;
+    let flaky: FakeGenerator = FakeGenerator::producing(&["Cue?"]).failing_on_call(2);
+    let source: String = three_part_source();
+    let import: ImportId = import_text_with(&repo, &flaky, &source).await;
+
+    // when I discard the failed import instead of retrying
+    import_source::discard(&repo, import).await.unwrap();
+
+    // then the failure is gone, and the card is still there to check
+    let inbox_now: Vec<InboxImport> = the_inbox(&repo).await;
+    assert_eq!(inbox_now[0].status, ImportStatus::InInbox);
+    assert_eq!(inbox_now[0].drafts.len(), 1);
+}
+
+#[tokio::test]
+async fn discarding_an_import_with_no_cards_removes_it() {
+    // given an import that failed before making any cards
+    let repo: SqliteCardRepo = empty_collection().await;
+    let failing: FakeGenerator = FakeGenerator::failing_with("Claude Code is not signed in");
+    let import: ImportId = import_source_with(&repo, &failing).await;
+
+    // when I discard it
+    import_source::discard(&repo, import).await.unwrap();
+
+    // then it is gone
+    assert!(the_inbox(&repo).await.is_empty());
 }

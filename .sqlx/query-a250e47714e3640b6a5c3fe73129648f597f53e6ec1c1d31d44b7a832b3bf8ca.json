@@ -1,0 +1,28 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) AS \"total!: i64\",\n                      COUNT(CASE WHEN grade != 'again' THEN 1 END) AS \"remembered!: i64\"\n               FROM review WHERE was_new = 0 AND reviewed_at >= ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "total!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "remembered!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "a250e47714e3640b6a5c3fe73129648f597f53e6ec1c1d31d44b7a832b3bf8ca"
+}

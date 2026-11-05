@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO card (kind, question, answer, status, created_at, due, last_review, sibling_id)\n           SELECT kind, answer, question, 'active', created_at, due, last_review, id\n           FROM card WHERE id = ? AND kind = 'reverse'\n           RETURNING id AS \"id!\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8b8f919d83f36c4c323418186ad8842c661daf88b9dd6a592234806e6697511d"
+}

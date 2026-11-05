@@ -4,9 +4,10 @@ use std::str::FromStr;
 
 use chrono::{DateTime, SecondsFormat, Utc};
 use myosotis_core::{
-    Card, CardId, CardRepo, Depth, DraftCard, DueCard, ExplanationRequest, GeneratedCard,
-    GenerationRequest, Grade, ImportId, ImportRepo, ImportStatus, InboxImport, LibraryRepo,
-    NewImport, Phase, RecentImport, RepoError, ReviewRepo, Schedule, StoredCard,
+    Card, CardId, CardKind, CardRepo, Depth, DraftCard, DraftToStore, DueCard, ExistingCard,
+    ExplanationRequest, GeneratedCard, GenerationRequest, Grade, ImportId, ImportRepo,
+    ImportStatus, InboxImport, LibraryRepo, NewImport, Phase, RecentImport, RepoError, ReviewRepo,
+    Schedule, Settings, SettingsRepo, StoredCard, Theme, TidyRepo,
 };
 use sqlx::SqlitePool;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteTransaction};
@@ -90,6 +91,16 @@ impl SqliteCardRepo {
             .map_err(repo_error)
     }
 
+    /// Writes a complete, consistent copy of the database, safe while the app is running.
+    pub async fn back_up_to(&self, path: &Path) -> Result<(), RepoError> {
+        sqlx::query("VACUUM INTO ?")
+            .bind(path.to_string_lossy().into_owned())
+            .execute(&self.pool)
+            .await
+            .map_err(repo_error)?;
+        Ok(())
+    }
+
     async fn begin(&self) -> Result<SqliteTransaction<'static>, RepoError> {
         self.pool.begin().await.map_err(repo_error)
     }
@@ -111,7 +122,8 @@ impl ReviewRepo for SqliteCardRepo {
     async fn due_cards(&self, until: DateTime<Utc>) -> Result<Vec<DueCard>, RepoError> {
         let until: String = to_db(until);
         let rows = sqlx::query!(
-            r#"SELECT c.id AS "id!", c.question, c.answer, c.due, c.stability, c.difficulty,
+            r#"SELECT c.id AS "id!", c.kind, c.sibling_id, c.question, c.answer, c.due, c.stability,
+                      c.difficulty,
                       c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,
                       o.source_title AS "source_title?", o.excerpt AS "excerpt?"
                FROM card c
@@ -129,6 +141,8 @@ impl ReviewRepo for SqliteCardRepo {
             .map(|row| {
                 Ok(DueCard {
                     id: row.id,
+                    kind: CardKind::parse(&row.kind),
+                    sibling: row.sibling_id,
                     card: Card::new(row.question, row.answer),
                     source_title: row.source_title,
                     excerpt: row.excerpt,
@@ -158,6 +172,41 @@ impl ReviewRepo for SqliteCardRepo {
         .await
         .map_err(repo_error)?;
         Ok(count as usize)
+    }
+
+    async fn cards_reviewed_since(&self, since: DateTime<Utc>) -> Result<Vec<CardId>, RepoError> {
+        let since: String = to_db(since);
+        sqlx::query_scalar!(
+            "SELECT DISTINCT card_id FROM review WHERE reviewed_at >= ?",
+            since
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(repo_error)
+    }
+
+    async fn retention_since(&self, since: DateTime<Utc>) -> Result<Option<u8>, RepoError> {
+        let since: String = to_db(since);
+        let row = sqlx::query!(
+            r#"SELECT COUNT(*) AS "total!: i64",
+                      COUNT(CASE WHEN grade != 'again' THEN 1 END) AS "remembered!: i64"
+               FROM review WHERE was_new = 0 AND reviewed_at >= ?"#,
+            since
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(repo_error)?;
+        Ok((row.total > 0).then(|| (row.remembered * 100 / row.total) as u8))
+    }
+
+    async fn slipping_count(&self) -> Result<i64, RepoError> {
+        sqlx::query_scalar!(
+            r#"SELECT COUNT(*) AS "count!: i64" FROM card
+               WHERE status = 'active' AND suspended = 0 AND lapses >= 3"#
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(repo_error)
     }
 
     async fn schedule_of(&self, card: CardId) -> Result<Schedule, RepoError> {
@@ -339,10 +388,130 @@ async fn save_schedule(
     Ok(())
 }
 
+impl SettingsRepo for SqliteCardRepo {
+    async fn load_settings(&self) -> Result<Settings, RepoError> {
+        let rows = sqlx::query!(r#"SELECT key AS "key!", value FROM setting"#)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(repo_error)?;
+
+        let mut settings: Settings = Settings::default();
+        for row in rows {
+            match row.key.as_str() {
+                "new_cards_per_day" => {
+                    settings.new_cards_per_day =
+                        row.value.parse().unwrap_or(settings.new_cards_per_day);
+                }
+                "desired_retention_percent" => {
+                    settings.desired_retention_percent = row
+                        .value
+                        .parse()
+                        .unwrap_or(settings.desired_retention_percent);
+                }
+                "theme" => settings.theme = Theme::parse(&row.value),
+                _ => {}
+            }
+        }
+        Ok(settings)
+    }
+
+    async fn save_settings(&self, settings: &Settings) -> Result<(), RepoError> {
+        let values: [(&str, String); 3] = [
+            ("new_cards_per_day", settings.new_cards_per_day.to_string()),
+            (
+                "desired_retention_percent",
+                settings.desired_retention_percent.to_string(),
+            ),
+            ("theme", settings.theme.as_str().to_string()),
+        ];
+        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
+        for (key, value) in values {
+            sqlx::query!(
+                "INSERT INTO setting (key, value) VALUES (?, ?)
+                 ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+                key,
+                value
+            )
+            .execute(&mut *transaction)
+            .await
+            .map_err(repo_error)?;
+        }
+        transaction.commit().await.map_err(repo_error)
+    }
+}
+
+impl TidyRepo for SqliteCardRepo {
+    async fn not_duplicate_pairs(&self) -> Result<Vec<(CardId, CardId)>, RepoError> {
+        let rows = sqlx::query!("SELECT card_a, card_b FROM not_duplicate")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(repo_error)?;
+        Ok(rows
+            .into_iter()
+            .map(|row| (row.card_a, row.card_b))
+            .collect())
+    }
+
+    async fn remember_not_duplicates(&self, cards: &[CardId]) -> Result<(), RepoError> {
+        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
+        for (index, first) in cards.iter().enumerate() {
+            for second in &cards[index + 1..] {
+                sqlx::query!(
+                    "INSERT OR IGNORE INTO not_duplicate (card_a, card_b) VALUES (?, ?)",
+                    first,
+                    second
+                )
+                .execute(&mut *transaction)
+                .await
+                .map_err(repo_error)?;
+            }
+        }
+        transaction.commit().await.map_err(repo_error)
+    }
+
+    async fn merge_cards(
+        &self,
+        keeper: CardId,
+        others: &[CardId],
+        wording: &Card,
+    ) -> Result<(), RepoError> {
+        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
+        sqlx::query!(
+            "UPDATE card SET question = ?, answer = ? WHERE id = ?",
+            wording.question,
+            wording.answer,
+            keeper
+        )
+        .execute(&mut *transaction)
+        .await
+        .map_err(repo_error)?;
+        for other in others {
+            sqlx::query!(
+                "UPDATE origin SET card_id = ? WHERE card_id = ?",
+                keeper,
+                other
+            )
+            .execute(&mut *transaction)
+            .await
+            .map_err(repo_error)?;
+            sqlx::query!("DELETE FROM review WHERE card_id = ?", other)
+                .execute(&mut *transaction)
+                .await
+                .map_err(repo_error)?;
+            sqlx::query!("DELETE FROM card WHERE id = ?", other)
+                .execute(&mut *transaction)
+                .await
+                .map_err(repo_error)?;
+        }
+        transaction.commit().await.map_err(repo_error)
+    }
+}
+
 impl LibraryRepo for SqliteCardRepo {
     async fn all_cards(&self) -> Result<Vec<StoredCard>, RepoError> {
         let rows = sqlx::query!(
-            r#"SELECT c.id AS "id!", c.question, c.answer, c.due, c.stability, c.difficulty,
+            r#"SELECT c.id AS "id!", c.kind, c.sibling_id, c.question, c.answer, c.due, c.stability,
+                      c.difficulty,
                       c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,
                       c.suspended AS "suspended: bool",
                       o.source_title AS "source_title?", o.excerpt AS "excerpt?",
@@ -363,6 +532,8 @@ impl LibraryRepo for SqliteCardRepo {
                 Ok(StoredCard {
                     due: DueCard {
                         id: row.id,
+                        kind: CardKind::parse(&row.kind),
+                        sibling: row.sibling_id,
                         card: Card::new(row.question, row.answer),
                         source_title: row.source_title,
                         excerpt: row.excerpt,
@@ -421,14 +592,15 @@ impl ImportRepo for SqliteCardRepo {
         let depth: &str = import.depth.as_str();
         let status: &str = ImportStatus::Generating.as_str();
         sqlx::query_scalar!(
-            r#"INSERT INTO import (title, full_text, status, depth, focus, created_at)
-               VALUES (?, ?, ?, ?, ?, ?)
+            r#"INSERT INTO import (title, full_text, status, depth, focus, fill_in_blank, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
                RETURNING id AS "id!""#,
             import.title,
             import.text,
             status,
             depth,
             import.focus,
+            import.fill_in_blank,
             created_at
         )
         .fetch_one(&self.pool)
@@ -438,7 +610,8 @@ impl ImportRepo for SqliteCardRepo {
 
     async fn generation_request(&self, import: ImportId) -> Result<GenerationRequest, RepoError> {
         let row = sqlx::query!(
-            "SELECT title, full_text, depth, focus FROM import WHERE id = ?",
+            r#"SELECT title, full_text, depth, focus, fill_in_blank AS "fill_in_blank: bool"
+               FROM import WHERE id = ?"#,
             import
         )
         .fetch_one(&self.pool)
@@ -450,12 +623,53 @@ impl ImportRepo for SqliteCardRepo {
             text: row.full_text.unwrap_or_default(),
             target_cards: Depth::parse(&row.depth).target_cards(),
             focus: row.focus,
+            fill_in_blank: row.fill_in_blank,
         })
     }
 
-    async fn mark_generating(&self, import: ImportId) -> Result<(), RepoError> {
+    async fn mark_generating(&self, import: ImportId, parts_total: usize) -> Result<(), RepoError> {
+        let parts_total: i64 = parts_total as i64;
         sqlx::query!(
-            "UPDATE import SET status = 'generating', error = NULL WHERE id = ?",
+            "UPDATE import SET status = 'generating', error = NULL, parts_total = ? WHERE id = ?",
+            parts_total,
+            import
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(repo_error)?;
+        Ok(())
+    }
+
+    async fn parts_done(&self, import: ImportId) -> Result<usize, RepoError> {
+        let done: i64 = sqlx::query_scalar!("SELECT parts_done FROM import WHERE id = ?", import)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(repo_error)?;
+        Ok(done as usize)
+    }
+
+    async fn is_generating(&self, import: ImportId) -> Result<bool, RepoError> {
+        let status: String = sqlx::query_scalar!("SELECT status FROM import WHERE id = ?", import)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(repo_error)?;
+        Ok(ImportStatus::parse(&status) == ImportStatus::Generating)
+    }
+
+    async fn draft_count(&self, import: ImportId) -> Result<i64, RepoError> {
+        sqlx::query_scalar!(
+            r#"SELECT COUNT(*) AS "count!: i64" FROM origin WHERE import_id = ?"#,
+            import
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(repo_error)
+    }
+
+    async fn mark_ready(&self, import: ImportId) -> Result<(), RepoError> {
+        sqlx::query!(
+            "UPDATE import SET status = 'in_inbox', error = NULL
+             WHERE id = ? AND status = 'generating'",
             import
         )
         .execute(&self.pool)
@@ -467,16 +681,20 @@ impl ImportRepo for SqliteCardRepo {
     async fn store_drafts(
         &self,
         import: ImportId,
-        cards: &[GeneratedCard],
+        cards: &[DraftToStore],
     ) -> Result<(), RepoError> {
         let mut transaction: SqliteTransaction<'static> = self.begin().await?;
-        for card in cards {
+        for draft in cards {
+            let card: &GeneratedCard = &draft.card;
+            let kind: &str = card.kind.as_str();
             let id: i64 = sqlx::query_scalar!(
-                r#"INSERT INTO card (question, answer, status, created_at)
-                   VALUES (?, ?, 'draft', (SELECT created_at FROM import WHERE id = ?))
+                r#"INSERT INTO card (kind, question, answer, status, duplicate_of, created_at)
+                   VALUES (?, ?, ?, 'draft', ?, (SELECT created_at FROM import WHERE id = ?))
                    RETURNING id AS "id!""#,
+                kind,
                 card.question,
                 card.answer,
+                draft.duplicate_of,
                 import
             )
             .fetch_one(&mut *transaction)
@@ -495,13 +713,25 @@ impl ImportRepo for SqliteCardRepo {
             .map_err(repo_error)?;
         }
         sqlx::query!(
-            "UPDATE import SET status = 'in_inbox', error = NULL WHERE id = ?",
+            "UPDATE import SET parts_done = parts_done + 1 WHERE id = ?",
             import
         )
         .execute(&mut *transaction)
         .await
         .map_err(repo_error)?;
         transaction.commit().await.map_err(repo_error)
+    }
+
+    async fn mark_generating_finished(&self, import: ImportId) -> Result<(), RepoError> {
+        sqlx::query!(
+            "UPDATE import SET status = 'in_inbox', error = NULL
+             WHERE id = ? AND status = 'failed'",
+            import
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(repo_error)?;
+        Ok(())
     }
 
     async fn mark_failed(&self, import: ImportId, message: &str) -> Result<(), RepoError> {
@@ -518,7 +748,8 @@ impl ImportRepo for SqliteCardRepo {
 
     async fn inbox(&self) -> Result<Vec<InboxImport>, RepoError> {
         let rows = sqlx::query!(
-            r#"SELECT id AS "id!", title, status, error, full_text FROM import
+            r#"SELECT id AS "id!", title, status, error, full_text, parts_total, parts_done
+               FROM import
                WHERE status IN ('generating', 'in_inbox', 'failed')
                ORDER BY id"#
         )
@@ -528,18 +759,40 @@ impl ImportRepo for SqliteCardRepo {
 
         let mut imports: Vec<InboxImport> = Vec::with_capacity(rows.len());
         for row in rows {
-            let drafts: Vec<DraftCard> = sqlx::query_as!(
-                DraftCard,
-                r#"SELECT c.id AS "id!", c.question, c.answer, o.excerpt AS "excerpt?"
+            let drafts: Vec<DraftCard> = sqlx::query!(
+                r#"SELECT c.id AS "id!", c.kind, c.question, c.answer, o.excerpt AS "excerpt?",
+                          e.id AS "existing_id?", e.question AS "existing_question?",
+                          e.answer AS "existing_answer?",
+                          (SELECT source_title FROM origin WHERE card_id = e.id LIMIT 1)
+                              AS "existing_source?: String",
+                          (SELECT COUNT(*) FROM review WHERE card_id = e.id)
+                              AS "existing_reviews!: i64"
                    FROM card c
                    JOIN origin o ON o.card_id = c.id
+                   LEFT JOIN card e ON e.id = c.duplicate_of
                    WHERE c.status = 'draft' AND o.import_id = ?
                    ORDER BY c.id"#,
                 row.id
             )
             .fetch_all(&self.pool)
             .await
-            .map_err(repo_error)?;
+            .map_err(repo_error)?
+            .into_iter()
+            .map(|draft| DraftCard {
+                id: draft.id,
+                kind: CardKind::parse(&draft.kind),
+                question: draft.question,
+                answer: draft.answer,
+                excerpt: draft.excerpt,
+                duplicate: draft.existing_id.map(|id| ExistingCard {
+                    id,
+                    question: draft.existing_question.unwrap_or_default(),
+                    answer: draft.existing_answer.unwrap_or_default(),
+                    source_title: draft.existing_source,
+                    review_count: draft.existing_reviews,
+                }),
+            })
+            .collect();
 
             imports.push(InboxImport {
                 id: row.id,
@@ -547,10 +800,76 @@ impl ImportRepo for SqliteCardRepo {
                 status: ImportStatus::parse(&row.status),
                 error: row.error,
                 text: row.full_text,
+                parts_total: row.parts_total,
+                parts_done: row.parts_done,
                 drafts,
             });
         }
         Ok(imports)
+    }
+
+    async fn draft(&self, card: CardId) -> Result<DraftCard, RepoError> {
+        let row = sqlx::query!(
+            r#"SELECT c.id AS "id!", c.kind, c.question, c.answer, o.excerpt AS "excerpt?"
+               FROM card c
+               LEFT JOIN origin o ON o.card_id = c.id
+               WHERE c.id = ?"#,
+            card
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(repo_error)?;
+        Ok(DraftCard {
+            id: row.id,
+            kind: CardKind::parse(&row.kind),
+            question: row.question,
+            answer: row.answer,
+            excerpt: row.excerpt,
+            duplicate: None,
+        })
+    }
+
+    async fn known_card_texts(&self) -> Result<Vec<(CardId, String)>, RepoError> {
+        let rows = sqlx::query!(r#"SELECT id AS "id!", question, answer FROM card"#)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(repo_error)?;
+        Ok(rows
+            .into_iter()
+            .map(|row| (row.id, format!("{} {}", row.question, row.answer)))
+            .collect())
+    }
+
+    async fn clear_duplicate(&self, card: CardId) -> Result<(), RepoError> {
+        sqlx::query!("UPDATE card SET duplicate_of = NULL WHERE id = ?", card)
+            .execute(&self.pool)
+            .await
+            .map_err(repo_error)?;
+        Ok(())
+    }
+
+    async fn add_source_to_existing(&self, card: CardId) -> Result<ImportId, RepoError> {
+        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
+        let import: ImportId =
+            sqlx::query_scalar!("SELECT import_id FROM origin WHERE card_id = ?", card)
+                .fetch_one(&mut *transaction)
+                .await
+                .map_err(repo_error)?;
+        sqlx::query!(
+            "UPDATE origin SET card_id = (SELECT duplicate_of FROM card WHERE id = ?)
+             WHERE card_id = ?",
+            card,
+            card
+        )
+        .execute(&mut *transaction)
+        .await
+        .map_err(repo_error)?;
+        sqlx::query!("DELETE FROM card WHERE id = ? AND status = 'draft'", card)
+            .execute(&mut *transaction)
+            .await
+            .map_err(repo_error)?;
+        transaction.commit().await.map_err(repo_error)?;
+        Ok(import)
     }
 
     async fn drafts_of(&self, import: ImportId) -> Result<Vec<CardId>, RepoError> {
@@ -579,6 +898,7 @@ impl ImportRepo for SqliteCardRepo {
         // Already accepted: the card may have review progress that must not be reset.
         if accepted > 0 {
             save_schedule(&mut transaction, card, schedule).await?;
+            add_reverse_sibling(&mut transaction, card).await?;
         }
         let import: ImportId =
             sqlx::query_scalar!("SELECT import_id FROM origin WHERE card_id = ?", card)
@@ -678,6 +998,41 @@ impl ImportRepo for SqliteCardRepo {
             .await
             .map_err(repo_error)
     }
+}
+
+/// A reverse card is reviewed both ways, so accepting one adds the other direction.
+async fn add_reverse_sibling(
+    transaction: &mut SqliteTransaction<'static>,
+    card: CardId,
+) -> Result<(), RepoError> {
+    let sibling: Option<i64> = sqlx::query_scalar!(
+        r#"INSERT INTO card (kind, question, answer, status, created_at, due, last_review, sibling_id)
+           SELECT kind, answer, question, 'active', created_at, due, last_review, id
+           FROM card WHERE id = ? AND kind = 'reverse'
+           RETURNING id AS "id!""#,
+        card
+    )
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(repo_error)?;
+
+    if let Some(sibling) = sibling {
+        sqlx::query!("UPDATE card SET sibling_id = ? WHERE id = ?", sibling, card)
+            .execute(&mut **transaction)
+            .await
+            .map_err(repo_error)?;
+        sqlx::query!(
+            "INSERT INTO origin (card_id, import_id, source_title, source_kind, excerpt, imported_at)
+             SELECT ?, import_id, source_title, source_kind, excerpt, imported_at
+             FROM origin WHERE card_id = ?",
+            sibling,
+            card
+        )
+        .execute(&mut **transaction)
+        .await
+        .map_err(repo_error)?;
+    }
+    Ok(())
 }
 
 /// Fixed-width UTC text, so comparing strings in SQL compares times.

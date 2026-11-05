@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE import SET status = 'generating', error = NULL, parts_total = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "cecac8049507917dd98cad297f5f23b91810ad8d925828b7bf54a38838b7c833"
+}

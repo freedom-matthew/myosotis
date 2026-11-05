@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE import SET status = 'in_inbox', error = NULL\n             WHERE id = ? AND status = 'failed'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "22e39587971ba2622dc4e4a54a56777b8e184c4083c52e52d9ba9223bf0dcfc0"
+}

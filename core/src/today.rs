@@ -14,6 +14,8 @@ pub struct TodaySummary {
     pub minutes: usize,
     pub next_due: Option<DateTime<Utc>>,
     pub inbox_count: i64,
+    pub retention_percent: Option<u8>,
+    pub slipping_count: i64,
     pub forecast: Vec<usize>,
     pub recent_imports: Vec<RecentImport>,
 }
@@ -45,6 +47,8 @@ pub fn summarise_day(
         minutes: (session.len() * SECONDS_PER_CARD).div_ceil(60),
         next_due: due_dates.iter().copied().filter(|due| *due > now).min(),
         inbox_count,
+        retention_percent: None,
+        slipping_count: 0,
         forecast,
         recent_imports,
     }

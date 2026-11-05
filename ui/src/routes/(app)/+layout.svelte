@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { Inbox, Library, Plus, Sun } from '@lucide/svelte';
+	import { Inbox, Library, Plus, Search, SlidersHorizontal, Sun } from '@lucide/svelte';
 	import { inbox, type InboxImport } from '#lib/api.js';
+	import CommandPalette from '#lib/components/command-palette.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { cn } from '#lib/utils.js';
 	import type { LayoutProps } from './$types';
@@ -11,6 +12,7 @@
 
 	let { children }: LayoutProps = $props();
 	let inboxCount: number = $state(0);
+	let paletteOpen: boolean = $state(false);
 
 	async function refreshCount(): Promise<void> {
 		const imports: InboxImport[] = await inbox();
@@ -28,11 +30,17 @@
 
 	function onkeydown(event: KeyboardEvent): void {
 		if (!event.metaKey && !event.ctrlKey) return;
+		if (event.key === 'k') {
+			event.preventDefault();
+			paletteOpen = true;
+			return;
+		}
 		const routes: Record<string, string> = {
 			n: '/new',
 			'1': '/',
 			'2': '/inbox',
-			'3': '/library'
+			'3': '/library',
+			',': '/settings'
 		};
 		const route: string | undefined = routes[event.key];
 		if (route) {
@@ -65,6 +73,14 @@
 			<span class="flex items-center gap-2"><Plus size={16} />New source</span>
 			<span class="font-mono text-xs opacity-70">⌘N</span>
 		</a>
+		<button
+			type="button"
+			onclick={() => (paletteOpen = true)}
+			class="-mt-3 flex items-center justify-between rounded-lg border border-input bg-secondary px-3 py-2 text-sm text-sidebar-foreground"
+		>
+			<span class="flex items-center gap-2"><Search size={15} />Search</span>
+			<span class="font-mono text-xs text-muted-foreground">⌘K</span>
+		</button>
 		<div class="flex flex-col gap-0.5">
 			<a href="/" class={navItem('/')}><Sun size={16} strokeWidth={1.8} />Today</a>
 			<a href="/inbox" class={navItem('/inbox')}>
@@ -78,9 +94,15 @@
 				<Library size={16} strokeWidth={1.8} />Library
 			</a>
 		</div>
+		<div class="flex-1"></div>
+		<a href="/settings" class={navItem('/settings')}>
+			<SlidersHorizontal size={16} strokeWidth={1.8} />Settings
+		</a>
 	</nav>
 
 	<main class="min-w-0 flex-1 overflow-y-auto">
 		{@render children()}
 	</main>
 </div>
+
+<CommandPalette bind:open={paletteOpen} />

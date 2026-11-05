@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO import (title, full_text, status, depth, focus, created_at)\n               VALUES (?, ?, ?, ?, ?, ?)\n               RETURNING id AS \"id!\"",
+  "query": "INSERT INTO import (title, full_text, status, depth, focus, fill_in_blank, created_at)\n               VALUES (?, ?, ?, ?, ?, ?, ?)\n               RETURNING id AS \"id!\"",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 6
+      "Right": 7
     },
     "nullable": [
       false
     ]
   },
-  "hash": "c453d50d450757ddbf484d6cf2522de8dc6b5e78b3e0c39c6e885f030d7dbc6c"
+  "hash": "3b4ca9f793bb50314b82b3d15692055275304c8968e77b7c408eaac1be877fc3"
 }

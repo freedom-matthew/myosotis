@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE origin SET card_id = (SELECT duplicate_of FROM card WHERE id = ?)\n             WHERE card_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4a16fa9b0754d53319d7f6e0c79a888ef1bff1138732e032ea2e904a3ae71b49"
+}

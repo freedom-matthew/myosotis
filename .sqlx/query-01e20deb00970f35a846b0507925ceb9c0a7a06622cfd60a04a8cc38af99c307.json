@@ -1,0 +1,129 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"id!\", c.kind, c.question, c.answer, o.excerpt AS \"excerpt?\",\n                          e.id AS \"existing_id?\", e.question AS \"existing_question?\",\n                          e.answer AS \"existing_answer?\",\n                          (SELECT source_title FROM origin WHERE card_id = e.id LIMIT 1)\n                              AS \"existing_source?: String\",\n                          (SELECT COUNT(*) FROM review WHERE card_id = e.id)\n                              AS \"existing_reviews!: i64\"\n                   FROM card c\n                   JOIN origin o ON o.card_id = c.id\n                   LEFT JOIN card e ON e.id = c.duplicate_of\n                   WHERE c.status = 'draft' AND o.import_id = ?\n                   ORDER BY c.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "kind",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "name": "question",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "answer",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "answer"
+          }
+        }
+      },
+      {
+        "name": "excerpt?",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origin",
+            "name": "excerpt"
+          }
+        }
+      },
+      {
+        "name": "existing_id?",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "existing_question?",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "existing_answer?",
+        "ordinal": 7,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "answer"
+          }
+        }
+      },
+      {
+        "name": "existing_source?: String",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origin",
+            "name": "source_title"
+          }
+        }
+      },
+      {
+        "name": "existing_reviews!: i64",
+        "ordinal": 9,
+        "type_info": "Null",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      null,
+      false,
+      false,
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "01e20deb00970f35a846b0507925ceb9c0a7a06622cfd60a04a8cc38af99c307"
+}

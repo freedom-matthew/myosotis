@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT c.id AS \"id!\", c.question, c.answer, c.due, c.stability, c.difficulty,\n                      c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,\n                      o.source_title AS \"source_title?\", o.excerpt AS \"excerpt?\"\n               FROM card c\n               LEFT JOIN origin o\n                 ON o.id = (SELECT MIN(id) FROM origin WHERE card_id = c.id)\n               WHERE c.status = 'active' AND c.suspended = 0 AND c.due <= ?\n               ORDER BY c.due, c.id",
+  "query": "SELECT c.id AS \"id!\", c.kind, c.sibling_id, c.question, c.answer, c.due, c.stability,\n                      c.difficulty,\n                      c.elapsed_days, c.scheduled_days, c.reps, c.lapses, c.phase, c.last_review,\n                      c.suspended AS \"suspended: bool\",\n                      o.source_title AS \"source_title?\", o.excerpt AS \"excerpt?\",\n                      (SELECT COUNT(*) FROM review r WHERE r.card_id = c.id)\n                          AS \"review_count!: i64\"\n               FROM card c\n               LEFT JOIN origin o\n                 ON o.id = (SELECT MIN(id) FROM origin WHERE card_id = c.id)\n               WHERE c.status = 'active'\n               ORDER BY c.id DESC",
   "describe": {
     "columns": [
       {
@@ -15,8 +15,30 @@
         }
       },
       {
-        "name": "question",
+        "name": "kind",
         "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "name": "sibling_id",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "sibling_id"
+          }
+        }
+      },
+      {
+        "name": "question",
+        "ordinal": 3,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -27,7 +49,7 @@
       },
       {
         "name": "answer",
-        "ordinal": 2,
+        "ordinal": 4,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -38,7 +60,7 @@
       },
       {
         "name": "due",
-        "ordinal": 3,
+        "ordinal": 5,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -49,7 +71,7 @@
       },
       {
         "name": "stability",
-        "ordinal": 4,
+        "ordinal": 6,
         "type_info": "Float",
         "origin": {
           "Table": {
@@ -60,7 +82,7 @@
       },
       {
         "name": "difficulty",
-        "ordinal": 5,
+        "ordinal": 7,
         "type_info": "Float",
         "origin": {
           "Table": {
@@ -71,7 +93,7 @@
       },
       {
         "name": "elapsed_days",
-        "ordinal": 6,
+        "ordinal": 8,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -82,7 +104,7 @@
       },
       {
         "name": "scheduled_days",
-        "ordinal": 7,
+        "ordinal": 9,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -93,7 +115,7 @@
       },
       {
         "name": "reps",
-        "ordinal": 8,
+        "ordinal": 10,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -104,7 +126,7 @@
       },
       {
         "name": "lapses",
-        "ordinal": 9,
+        "ordinal": 11,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -115,7 +137,7 @@
       },
       {
         "name": "phase",
-        "ordinal": 10,
+        "ordinal": 12,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -126,7 +148,7 @@
       },
       {
         "name": "last_review",
-        "ordinal": 11,
+        "ordinal": 13,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -136,8 +158,19 @@
         }
       },
       {
+        "name": "suspended: bool",
+        "ordinal": 14,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "suspended"
+          }
+        }
+      },
+      {
         "name": "source_title?",
-        "ordinal": 12,
+        "ordinal": 15,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -148,7 +181,7 @@
       },
       {
         "name": "excerpt?",
-        "ordinal": 13,
+        "ordinal": 16,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -156,12 +189,21 @@
             "name": "excerpt"
           }
         }
+      },
+      {
+        "name": "review_count!: i64",
+        "ordinal": 17,
+        "type_info": "Integer",
+        "origin": "Expression"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
+      false,
+      false,
+      true,
       false,
       false,
       false,
@@ -175,8 +217,9 @@
       false,
       false,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "7ed8ae9d48f31cef794a17ab36954bc20699bccb8dfd6b521a4e7eb91c14cbec"
+  "hash": "77ac33dd12f0103a3fb116d9be0a2fdaaa9f10676a3726f5c6f5f16d4ec542fa"
 }

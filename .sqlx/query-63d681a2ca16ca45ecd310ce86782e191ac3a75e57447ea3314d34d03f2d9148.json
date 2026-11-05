@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE card SET duplicate_of = NULL WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "63d681a2ca16ca45ecd310ce86782e191ac3a75e57447ea3314d34d03f2d9148"
+}

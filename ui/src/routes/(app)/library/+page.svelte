@@ -1,5 +1,16 @@
 <script lang="ts">
-	import { deleteCard, editCard, libraryCards, setSuspended, type LibraryCard } from '#lib/api.js';
+	import { page } from '$app/state';
+	import { toast } from 'svelte-sonner';
+	import {
+		deleteCard,
+		editCard,
+		libraryCards,
+		setSuspended,
+		tidyGroups,
+		type LibraryCard,
+		type TidyGroup
+	} from '#lib/api.js';
+	import { withoutGapMarks } from '#lib/cloze.js';
 	import Notice from '#lib/components/notice.svelte';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -12,22 +23,25 @@
 	import { isTyping } from '#lib/keys.js';
 	import { cn } from '#lib/utils.js';
 
-	type Filter = 'all' | 'due' | 'new' | 'low' | 'suspended';
+	type Filter = 'all' | 'due' | 'new' | 'low' | 'slipping' | 'suspended';
 	type FilterOption = { value: Filter; label: string };
 
 	const LOW_RECALL_PERCENT: number = 70;
+	const SLIPPING_LAPSES: number = 3;
 	const DAY_MS: number = 86_400_000;
 	const FILTERS: FilterOption[] = [
 		{ value: 'all', label: 'All' },
 		{ value: 'due', label: 'Due today' },
 		{ value: 'new', label: 'New' },
 		{ value: 'low', label: 'Low recall' },
+		{ value: 'slipping', label: 'Keeps slipping' },
 		{ value: 'suspended', label: 'Suspended' }
 	];
 
 	let cards: LibraryCard[] = $state([]);
 	let search: string = $state('');
-	let filter: Filter = $state('all');
+	let filter: Filter = $state((page.url.searchParams.get('filter') as Filter | null) ?? 'all');
+	let tidyCount: number = $state(0);
 	let selectedId: number | null = $state(null);
 	let question: string = $state('');
 	let answer: string = $state('');
@@ -54,6 +68,7 @@
 		if (filter === 'suspended') return card.suspended;
 		if (filter === 'due') return isDueToday(card);
 		if (filter === 'new') return card.is_new;
+		if (filter === 'slipping') return card.lapses >= SLIPPING_LAPSES;
 		if (filter === 'low') {
 			return card.recall_percent !== null && card.recall_percent < LOW_RECALL_PERCENT;
 		}
@@ -84,6 +99,9 @@
 	async function load(): Promise<void> {
 		try {
 			cards = await libraryCards();
+			const wanted: number = Number(page.url.searchParams.get('card'));
+			const linked: LibraryCard | undefined = cards.find((card) => card.id === wanted);
+			if (linked && selectedId === null) select(linked);
 		} catch (reason) {
 			error = String(reason);
 		}
@@ -117,6 +135,7 @@
 		confirmingDelete = false;
 		selectedId = null;
 		act(() => deleteCard(id));
+		toast('Card deleted');
 	}
 
 	function moveSelection(step: number): void {
@@ -127,6 +146,7 @@
 
 	$effect(() => {
 		load();
+		tidyGroups().then((groups: TidyGroup[]) => (tidyCount = groups.length));
 	});
 
 	function onkeydown(event: KeyboardEvent): void {
@@ -150,12 +170,22 @@
 <svelte:window {onkeydown} />
 
 <div class="flex h-full flex-col gap-6 px-10 pt-9 pb-6">
-	<header class="flex flex-col gap-1">
-		<h1 class="font-serif text-3xl font-normal">Library</h1>
-		<span class="font-mono text-xs text-muted-foreground">
-			{cards.length}
-			{cards.length === 1 ? 'card' : 'cards'}
-		</span>
+	<header class="flex items-end justify-between gap-6">
+		<div class="flex flex-col gap-1">
+			<h1 class="font-serif text-3xl font-normal">Library</h1>
+			<span class="font-mono text-xs text-muted-foreground">
+				{cards.length}
+				{cards.length === 1 ? 'card' : 'cards'}
+			</span>
+		</div>
+		<Button href="/tidy" variant="secondary" class="gap-2 border-input">
+			Tidy up
+			{#if tidyCount > 0}
+				<span class="rounded-full bg-primary-tint px-2 font-mono text-xs text-primary-strong">
+					{tidyCount}
+				</span>
+			{/if}
+		</Button>
 	</header>
 
 	{#if error}
@@ -201,7 +231,7 @@
 							class={cn(card.id === selectedId && 'bg-primary-soft hover:bg-primary-soft')}
 						>
 							<Table.Cell class="max-w-64 truncate font-serif text-base">
-								{card.question}
+								{withoutGapMarks(card.question)}
 							</Table.Cell>
 							<Table.Cell class="max-w-32 truncate text-xs text-muted-foreground">
 								{card.source_title ?? '—'}

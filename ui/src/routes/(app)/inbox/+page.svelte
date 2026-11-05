@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Check } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import {
 		acceptAllDrafts,
 		acceptDraft,
@@ -7,10 +8,15 @@
 		discardImport,
 		editDraft,
 		inbox,
+		keepBothCards,
+		mergeSourceIntoExisting,
 		retryImport,
+		rewriteDraft,
+		stopImport,
 		type DraftCard,
 		type InboxImport
 	} from '#lib/api.js';
+	import CardQuestion from '#lib/components/card-question.svelte';
 	import Notice from '#lib/components/notice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -18,7 +24,6 @@
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { isTyping } from '#lib/keys.js';
-	import { cn } from '#lib/utils.js';
 
 	const POLL_MS: number = 2000;
 
@@ -29,16 +34,31 @@
 	let editing: boolean = $state(false);
 	let editQuestion: string = $state('');
 	let editAnswer: string = $state('');
+	let rewriting: boolean = $state(false);
 
 	const failed: InboxImport[] = $derived(imports.filter((item) => item.status === 'failed'));
 	const generating: InboxImport[] = $derived(
 		imports.filter((item) => item.status === 'generating')
 	);
+	/** The source being checked: cards can arrive while later parts are still generating. */
 	const current: InboxImport | undefined = $derived(
-		imports.find((item) => item.status === 'in_inbox')
+		imports.find((item) => item.drafts.length > 0)
 	);
 	const drafts: DraftCard[] = $derived(current?.drafts ?? []);
 	const focused: DraftCard | undefined = $derived(drafts[focusedIndex]);
+	const duplicates: number = $derived(drafts.filter((draft) => draft.duplicate).length);
+
+	const summary: string = $derived.by(() => {
+		if (!current) return '';
+		const parts: string[] = [`${drafts.length} to check`];
+		if (duplicates > 0) {
+			parts.push(duplicates === 1 ? '1 possible duplicate' : `${duplicates} possible duplicates`);
+		}
+		if (current.status === 'generating') {
+			parts.push(`still generating, part ${current.parts_done + 1} of ${current.parts_total}`);
+		}
+		return parts.join(' · ');
+	});
 
 	/** The source text split around the focused card's passage, when it can be found. */
 	const passage: { before: string; match: string; after: string } | null = $derived.by(() => {
@@ -58,7 +78,8 @@
 		try {
 			imports = await inbox();
 			loaded = true;
-			focusedIndex = Math.min(focusedIndex, Math.max((current?.drafts.length ?? 1) - 1, 0));
+			const count: number = imports.find((item) => item.drafts.length > 0)?.drafts.length ?? 1;
+			focusedIndex = Math.min(focusedIndex, Math.max(count - 1, 0));
 		} catch (reason) {
 			error = String(reason);
 		}
@@ -88,6 +109,17 @@
 		await act(() => editDraft(card.id, editQuestion, editAnswer));
 	}
 
+	async function rewrite(card: DraftCard): Promise<void> {
+		rewriting = true;
+		await act(() => rewriteDraft(card.id));
+		rewriting = false;
+	}
+
+	function deleteCard(card: DraftCard): void {
+		act(() => deleteDraft(card.id));
+		toast('Card deleted');
+	}
+
 	$effect(() => {
 		refresh();
 		const timer: ReturnType<typeof setInterval> = setInterval(() => {
@@ -105,12 +137,16 @@
 		if (isTyping(event) || event.metaKey || event.ctrlKey || !focused) return;
 		const card: DraftCard = focused;
 		if (event.key === 'j') focusedIndex = Math.min(focusedIndex + 1, drafts.length - 1);
-		else if (event.key === 'k') focusedIndex = Math.max(focusedIndex - 1, 0);
-		else if (event.key === 'a') act(() => acceptDraft(card.id));
+		else if (event.key === 'k' && !card.duplicate) focusedIndex = Math.max(focusedIndex - 1, 0);
+		else if (event.key === 'k') act(() => keepBothCards(card.id));
+		else if (event.key === 's' && card.duplicate) deleteCard(card);
+		else if (event.key === 'm' && card.duplicate) act(() => mergeSourceIntoExisting(card.id));
+		else if (event.key === 'a' && !card.duplicate) act(() => acceptDraft(card.id));
 		else if (event.key === 'A' && current) {
 			const id: number = current.id;
 			act(() => acceptAllDrafts(id));
-		} else if (event.key === 'd') act(() => deleteDraft(card.id));
+		} else if (event.key === 'd') deleteCard(card);
+		else if (event.key === 'r' && !rewriting) rewrite(card);
 		else if (event.key === 'e') {
 			event.preventDefault();
 			startEditing();
@@ -135,9 +171,14 @@
 		</Notice>
 	{/each}
 
-	{#each generating as item (item.id)}
+	{#each generating.filter((item) => item.id !== current?.id) as item (item.id)}
 		<div class="flex flex-col gap-3 rounded-2xl border bg-card p-5">
-			<span class="text-sm text-muted-foreground">Generating cards from “{item.title}”…</span>
+			<div class="flex items-center justify-between gap-4">
+				<span class="text-sm text-muted-foreground">
+					Generating cards from “{item.title}”, part {item.parts_done + 1} of {item.parts_total}…
+				</span>
+				<Button variant="ghost" onclick={() => act(() => stopImport(item.id))}>Stop</Button>
+			</div>
 			<Skeleton class="h-6 w-3/4" />
 			<Skeleton class="h-6 w-1/2" />
 		</div>
@@ -148,12 +189,17 @@
 			<div class="flex flex-col gap-1">
 				<span class="text-xs text-muted-foreground">Inbox</span>
 				<h1 class="font-serif text-3xl font-normal">{current.title}</h1>
-				<span class="text-sm text-muted-foreground">{drafts.length} to check</span>
+				<span class="text-sm text-muted-foreground">{summary}</span>
 			</div>
-			<Button onclick={() => act(() => acceptAllDrafts(current.id))} class="gap-2">
-				Accept all remaining
-				<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">⇧A</Kbd>
-			</Button>
+			<div class="flex gap-2">
+				{#if current.status === 'generating'}
+					<Button variant="ghost" onclick={() => act(() => stopImport(current.id))}>Stop</Button>
+				{/if}
+				<Button onclick={() => act(() => acceptAllDrafts(current.id))} class="gap-2">
+					Accept all remaining
+					<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">⇧A</Kbd>
+				</Button>
+			</div>
 		</header>
 
 		<div class="grid min-h-0 flex-1 grid-cols-2 gap-6">
@@ -184,9 +230,54 @@
 									</Button>
 									<Button variant="ghost" onclick={() => (editing = false)}>Cancel</Button>
 								</div>
+							{:else if draft.duplicate}
+								<span class="self-start rounded-full bg-hook px-2.5 py-0.5 text-xs text-hook-foreground">
+									Similar card already in your collection
+								</span>
+								<div class="grid grid-cols-2 gap-3">
+									<div class="flex flex-col gap-1">
+										<span class="text-xs text-muted-foreground">New · from this source</span>
+										<p class="font-serif text-base">
+											<CardQuestion kind={draft.kind} question={draft.question} />
+										</p>
+										<p class="text-sm text-card-answer">{draft.answer}</p>
+									</div>
+									<div class="flex flex-col gap-1">
+										<span class="text-xs text-muted-foreground">
+											Existing · {draft.duplicate.source_title ?? 'added by hand'} ·
+											{draft.duplicate.review_count} reviews
+										</span>
+										<p class="font-serif text-base">{draft.duplicate.question}</p>
+										<p class="text-sm text-card-answer">{draft.duplicate.answer}</p>
+									</div>
+								</div>
+								<div class="flex flex-wrap gap-1">
+									<Button onclick={() => deleteCard(draft)} class="gap-2">
+										Skip
+										<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">S</Kbd>
+									</Button>
+									<Button
+										variant="ghost"
+										onclick={() => act(() => mergeSourceIntoExisting(draft.id))}
+										class="gap-2"
+									>
+										Add source to existing <Kbd class="font-mono">M</Kbd>
+									</Button>
+									<Button
+										variant="ghost"
+										onclick={() => act(() => keepBothCards(draft.id))}
+										class="gap-2"
+									>
+										Keep both <Kbd class="font-mono">K</Kbd>
+									</Button>
+								</div>
 							{:else}
-								<h2 class="font-serif text-lg font-normal">{draft.question}</h2>
-								<p class="font-serif text-base text-card-answer">{draft.answer}</p>
+								<h2 class="font-serif text-lg font-normal">
+									<CardQuestion kind={draft.kind} question={draft.question} />
+								</h2>
+								{#if draft.kind !== 'cloze'}
+									<p class="font-serif text-base text-card-answer">{draft.answer}</p>
+								{/if}
 								<div class="flex flex-wrap gap-1">
 									<Button onclick={() => act(() => acceptDraft(draft.id))} class="gap-2">
 										<Check size={14} />Accept
@@ -197,9 +288,14 @@
 									</Button>
 									<Button
 										variant="ghost"
-										onclick={() => act(() => deleteDraft(draft.id))}
+										disabled={rewriting}
+										onclick={() => rewrite(draft)}
 										class="gap-2"
 									>
+										{rewriting ? 'Rewriting…' : 'Rewrite'}
+										<Kbd class="font-mono">R</Kbd>
+									</Button>
+									<Button variant="ghost" onclick={() => deleteCard(draft)} class="gap-2">
 										Delete <Kbd class="font-mono">D</Kbd>
 									</Button>
 								</div>
@@ -212,13 +308,22 @@
 								focusedIndex = index;
 								editing = false;
 							}}
-							class={cn('rounded-xl border bg-card p-4 text-left transition-colors hover:border-input')}
+							class="rounded-xl border bg-card p-4 text-left transition-colors hover:border-input"
 						>
-							<span class="block font-serif text-lg">{draft.question}</span>
-							<span class="block truncate text-sm text-muted-foreground">{draft.answer}</span>
+							<span class="block font-serif text-lg">
+								<CardQuestion kind={draft.kind} question={draft.question} />
+							</span>
+							{#if draft.duplicate}
+								<span class="text-xs text-hook-foreground">Possible duplicate</span>
+							{:else if draft.kind !== 'cloze'}
+								<span class="block truncate text-sm text-muted-foreground">{draft.answer}</span>
+							{/if}
 						</button>
 					{/if}
 				{/each}
+				{#if current.status === 'generating'}
+					<Skeleton class="h-16 w-full shrink-0 rounded-xl" />
+				{/if}
 			</section>
 		</div>
 
@@ -226,7 +331,15 @@
 			<span><Kbd class="font-mono">J</Kbd> <Kbd class="font-mono">K</Kbd> move</span>
 			<span><Kbd class="font-mono">A</Kbd> accept</span>
 			<span><Kbd class="font-mono">E</Kbd> edit</span>
+			<span><Kbd class="font-mono">R</Kbd> ask AI to rewrite</span>
 			<span><Kbd class="font-mono">D</Kbd> delete</span>
+			{#if duplicates > 0}
+				<span>
+					<Kbd class="font-mono">S</Kbd>
+					<Kbd class="font-mono">M</Kbd>
+					<Kbd class="font-mono">K</Kbd> duplicates: skip · add source · keep both
+				</span>
+			{/if}
 		</footer>
 	{:else if loaded && failed.length === 0 && generating.length === 0}
 		<div class="flex flex-1 flex-col items-center justify-center gap-4">

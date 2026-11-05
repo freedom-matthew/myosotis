@@ -1,15 +1,21 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { toast } from 'svelte-sonner';
 	import { FileText, Undo2, X } from '@lucide/svelte';
 	import {
 		editCard,
 		explainCard,
 		gradeCard,
 		reviewSession,
+		setSuspended,
+		todaySummary,
 		undoGrade,
 		type Grade,
-		type SessionCard
+		type SessionCard,
+		type TodaySummary
 	} from '#lib/api.js';
+	import CardQuestion from '#lib/components/card-question.svelte';
 	import Notice from '#lib/components/notice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -36,6 +42,7 @@
 	let error: string | null = $state(null);
 	let gradedCards: number[] = $state([]);
 	let explanation: string | null = $state(null);
+	let nextDue: string | null = $state(null);
 	let explaining: boolean = $state(false);
 	let editing: boolean = $state(false);
 	let editQuestion: string = $state('');
@@ -44,8 +51,17 @@
 	const card: SessionCard | undefined = $derived(queue[0]);
 	const total: number = $derived(reviewed + queue.length);
 
+	const skipNew: boolean = page.url.searchParams.has('skip_new');
+
+	async function loadNextDue(): Promise<void> {
+		const summary: TodaySummary = await todaySummary();
+		nextDue = summary.next_due;
+	}
+
 	async function loadQueue(): Promise<void> {
-		queue = await reviewSession();
+		const cards: SessionCard[] = await reviewSession();
+		queue = skipNew ? cards.filter((item) => !item.is_new) : cards;
+		if (queue.length === 0) loadNextDue();
 		revealed = false;
 		showContext = false;
 		explanation = null;
@@ -84,6 +100,21 @@
 			await loadQueue();
 			const undone: SessionCard | undefined = queue.find((item) => item.id === last);
 			if (undone) queue = [undone, ...queue.filter((item) => item.id !== last)];
+		} catch (reason) {
+			error = String(reason);
+		}
+		saving = false;
+	}
+
+	async function suspend(): Promise<void> {
+		if (!card || saving) return;
+		const id: number = card.id;
+		saving = true;
+		error = null;
+		try {
+			await setSuspended(id, true);
+			await loadQueue();
+			toast('Card suspended');
 		} catch (reason) {
 			error = String(reason);
 		}
@@ -145,6 +176,7 @@
 		} else if (revealed && card) {
 			if (event.key === 'c' && card.excerpt) showContext = !showContext;
 			if (event.key === 'x') explain();
+			if (event.key === 's') suspend();
 			if (event.key === 'e') {
 				event.preventDefault();
 				startEditing();
@@ -205,15 +237,19 @@
 						<Button variant="ghost" onclick={() => (editing = false)}>Cancel</Button>
 					</div>
 				{:else}
-					<h1 class="font-serif text-3xl leading-tight font-normal text-pretty">{card.question}</h1>
+					<h1 class="font-serif text-3xl leading-tight font-normal text-pretty">
+						<CardQuestion kind={card.kind} question={card.question} {revealed} />
+					</h1>
 				{/if}
 
 				{#if revealed && !editing}
 					<div class="flex animate-reveal flex-col gap-5">
 						<div class="h-px bg-border"></div>
-						<p class="font-serif text-xl leading-normal text-pretty text-card-answer">
-							{card.answer}
-						</p>
+						{#if card.kind !== 'cloze'}
+							<p class="font-serif text-xl leading-normal text-pretty text-card-answer">
+								{card.answer}
+							</p>
+						{/if}
 						{#if explaining}
 							<div class="flex flex-col gap-2 rounded-lg bg-muted px-4 py-3.5">
 								<span class="text-xs font-medium text-muted-foreground">Explanation</span>
@@ -243,6 +279,14 @@
 								class="gap-1.5 text-xs text-foreground-secondary"
 							>
 								Explain <span class="font-mono text-muted-foreground">X</span>
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={suspend}
+								class="gap-1.5 text-xs text-foreground-secondary"
+							>
+								Suspend <span class="font-mono text-muted-foreground">S</span>
 							</Button>
 							<Button
 								variant="ghost"
@@ -298,6 +342,15 @@
 	{:else if loaded}
 		<main class="flex flex-1 animate-reveal flex-col items-center justify-center gap-4">
 			<h1 class="font-serif text-3xl font-normal">That is everything for now.</h1>
+			{#if nextDue}
+				<p class="text-base text-muted-foreground">
+					Next review: {new Date(nextDue).toLocaleString('en-GB', {
+						weekday: 'long',
+						hour: '2-digit',
+						minute: '2-digit'
+					})}
+				</p>
+			{/if}
 			<Button href="/" class="h-auto rounded-xl px-5 py-3 shadow-primary">Back to Today</Button>
 		</main>
 	{/if}

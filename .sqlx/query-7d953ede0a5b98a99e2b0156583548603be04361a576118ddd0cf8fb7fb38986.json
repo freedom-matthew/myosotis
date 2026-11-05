@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT title, full_text, depth, focus FROM import WHERE id = ?",
+  "query": "SELECT title, full_text, depth, focus, fill_in_blank AS \"fill_in_blank: bool\"\n               FROM import WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -46,6 +46,17 @@
             "name": "focus"
           }
         }
+      },
+      {
+        "name": "fill_in_blank: bool",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "fill_in_blank"
+          }
+        }
       }
     ],
     "parameters": {
@@ -55,8 +66,9 @@
       false,
       true,
       false,
-      true
+      true,
+      false
     ]
   },
-  "hash": "5859f5b01fd2b05b021811c4eadb30757677d9be305e04c5a9202be720e2665d"
+  "hash": "7d953ede0a5b98a99e2b0156583548603be04361a576118ddd0cf8fb7fb38986"
 }

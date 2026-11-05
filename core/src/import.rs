@@ -3,7 +3,7 @@ use std::future::Future;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::card::{Card, CardId, RepoError};
+use crate::card::{Card, CardId, CardKind, RepoError};
 use crate::review::Schedule;
 
 pub type ImportId = i64;
@@ -48,6 +48,7 @@ pub struct NewImport {
     pub text: String,
     pub depth: Depth,
     pub focus: Option<String>,
+    pub fill_in_blank: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -86,19 +87,84 @@ pub struct GenerationRequest {
     pub text: String,
     pub target_cards: u32,
     pub focus: Option<String>,
+    pub fill_in_blank: bool,
 }
 
 /// What the AI returns for one card.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct GeneratedCard {
+    #[serde(default)]
+    pub kind: CardKind,
     pub question: String,
     pub answer: String,
     pub excerpt: String,
 }
 
+impl GeneratedCard {
+    /// A fill-the-gap card without a marked gap can't be reviewed as one, and its answer
+    /// is always the gap's text.
+    pub fn normalised(self) -> Self {
+        if self.kind != CardKind::Cloze {
+            return self;
+        }
+        match gap_text(&self.question) {
+            Some(gap) => Self {
+                answer: gap,
+                ..self
+            },
+            None => Self {
+                kind: CardKind::Qa,
+                ..self
+            },
+        }
+    }
+}
+
+fn gap_text(question: &str) -> Option<String> {
+    let (_, rest) = question.split_once("{{")?;
+    let (gap, _) = rest.split_once("}}")?;
+    (!gap.trim().is_empty()).then(|| gap.trim().to_string())
+}
+
+/// Splits a long source at paragraph breaks, so each part fits one AI call.
+pub fn split_source(text: &str, max_chars: usize) -> Vec<String> {
+    let mut parts: Vec<String> = Vec::new();
+    let mut current: String = String::new();
+    for paragraph in text.split("\n\n") {
+        if !current.is_empty() && current.chars().count() + paragraph.chars().count() > max_chars {
+            parts.push(std::mem::take(&mut current));
+        }
+        if !current.is_empty() {
+            current.push_str("\n\n");
+        }
+        current.push_str(paragraph);
+    }
+    if !current.trim().is_empty() {
+        parts.push(current);
+    }
+    parts
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 #[error("{0}")]
 pub struct GenerateError(pub String);
+
+/// What the AI receives to improve one card.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RewriteRequest {
+    pub kind: CardKind,
+    pub question: String,
+    pub answer: String,
+    pub excerpt: Option<String>,
+}
+
+/// Port for whatever rewrites a card from its original passage.
+pub trait CardRewriter {
+    fn rewrite(
+        &self,
+        request: &RewriteRequest,
+    ) -> impl Future<Output = Result<Card, GenerateError>> + Send;
+}
 
 /// Port for whatever creates cards from a source.
 pub trait CardGenerator {
@@ -111,9 +177,28 @@ pub trait CardGenerator {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DraftCard {
     pub id: CardId,
+    pub kind: CardKind,
     pub question: String,
     pub answer: String,
     pub excerpt: Option<String>,
+    pub duplicate: Option<ExistingCard>,
+}
+
+/// The card a draft resembles, shown side by side with it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ExistingCard {
+    pub id: CardId,
+    pub question: String,
+    pub answer: String,
+    pub source_title: Option<String>,
+    pub review_count: i64,
+}
+
+/// A generated card on its way into the Inbox.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DraftToStore {
+    pub card: GeneratedCard,
+    pub duplicate_of: Option<CardId>,
 }
 
 /// A source with cards still to check, as the Inbox shows it.
@@ -124,6 +209,8 @@ pub struct InboxImport {
     pub status: ImportStatus,
     pub error: Option<String>,
     pub text: Option<String>,
+    pub parts_total: i64,
+    pub parts_done: i64,
     pub drafts: Vec<DraftCard>,
 }
 
@@ -153,12 +240,33 @@ pub trait ImportRepo {
     fn mark_generating(
         &self,
         import: ImportId,
+        parts_total: usize,
     ) -> impl Future<Output = Result<(), RepoError>> + Send;
 
+    fn parts_done(&self, import: ImportId)
+    -> impl Future<Output = Result<usize, RepoError>> + Send;
+
+    fn is_generating(
+        &self,
+        import: ImportId,
+    ) -> impl Future<Output = Result<bool, RepoError>> + Send;
+
+    /// Saves the cards of one finished part, so they appear in the Inbox straight away.
     fn store_drafts(
         &self,
         import: ImportId,
-        cards: &[GeneratedCard],
+        cards: &[DraftToStore],
+    ) -> impl Future<Output = Result<(), RepoError>> + Send;
+
+    fn draft_count(&self, import: ImportId) -> impl Future<Output = Result<i64, RepoError>> + Send;
+
+    /// Marks generation as finished, keeping the cards made so far.
+    fn mark_ready(&self, import: ImportId) -> impl Future<Output = Result<(), RepoError>> + Send;
+
+    /// Moves an import that failed partway on to the Inbox with the cards it has.
+    fn mark_generating_finished(
+        &self,
+        import: ImportId,
     ) -> impl Future<Output = Result<(), RepoError>> + Send;
 
     fn mark_failed(
@@ -166,6 +274,22 @@ pub trait ImportRepo {
         import: ImportId,
         message: &str,
     ) -> impl Future<Output = Result<(), RepoError>> + Send;
+
+    fn draft(&self, card: CardId) -> impl Future<Output = Result<DraftCard, RepoError>> + Send;
+
+    /// The text of every card and draft, for spotting duplicates.
+    fn known_card_texts(
+        &self,
+    ) -> impl Future<Output = Result<Vec<(CardId, String)>, RepoError>> + Send;
+
+    /// Treats a suspected duplicate as a normal card.
+    fn clear_duplicate(&self, card: CardId) -> impl Future<Output = Result<(), RepoError>> + Send;
+
+    /// Moves a draft's source to the card it duplicates and removes the draft. Returns its import.
+    fn add_source_to_existing(
+        &self,
+        card: CardId,
+    ) -> impl Future<Output = Result<ImportId, RepoError>> + Send;
 
     fn inbox(&self) -> impl Future<Output = Result<Vec<InboxImport>, RepoError>> + Send;
 
@@ -199,7 +323,7 @@ pub trait ImportRepo {
         import: ImportId,
     ) -> impl Future<Output = Result<(), RepoError>> + Send;
 
-    /// Removes a failed import. It has no cards, so nothing learned can be lost.
+    /// Removes a failed import that produced no cards, so nothing can be lost.
     fn discard_failed_import(
         &self,
         import: ImportId,
@@ -211,4 +335,27 @@ pub trait ImportRepo {
     ) -> impl Future<Output = Result<Vec<RecentImport>, RepoError>> + Send;
 
     fn inbox_count(&self) -> impl Future<Output = Result<i64, RepoError>> + Send;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn long_sources_split_at_paragraphs_and_keep_all_the_text() {
+        let text: String = ["aaaa", "bbbb", "cccc"].join("\n\n");
+        let parts: Vec<String> = split_source(&text, 10);
+        assert_eq!(parts, vec!["aaaa\n\nbbbb", "cccc"]);
+    }
+
+    #[test]
+    fn a_short_source_stays_in_one_part() {
+        assert_eq!(split_source("short", 100), vec!["short"]);
+    }
+
+    #[test]
+    fn one_huge_paragraph_is_kept_rather_than_lost() {
+        let text: String = "x".repeat(50);
+        assert_eq!(split_source(&text, 10), vec![text.clone()]);
+    }
 }

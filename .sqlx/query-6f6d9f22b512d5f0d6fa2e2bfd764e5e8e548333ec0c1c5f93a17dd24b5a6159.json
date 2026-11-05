@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO card (question, answer, status, created_at)\n                   VALUES (?, ?, 'draft', (SELECT created_at FROM import WHERE id = ?))\n                   RETURNING id AS \"id!\"",
+  "query": "INSERT INTO card (kind, question, answer, status, duplicate_of, created_at)\n                   VALUES (?, ?, ?, 'draft', ?, (SELECT created_at FROM import WHERE id = ?))\n                   RETURNING id AS \"id!\"",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 5
     },
     "nullable": [
       false
     ]
   },
-  "hash": "63daf77cd2dd497c3e18fde9d826e2196e98b01da770702fd0dd1e9e3436b3a1"
+  "hash": "6f6d9f22b512d5f0d6fa2e2bfd764e5e8e548333ec0c1c5f93a17dd24b5a6159"
 }

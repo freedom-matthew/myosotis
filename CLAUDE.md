@@ -40,7 +40,7 @@ Rules:
 - Don't add new dependencies without asking first.
 
 ## Code style
-- Always annotate the type of every variable binding, even where it can be inferred: `let cards: Vec<Card> = ...` in Rust, `const cards: Promise<Card[]> = ...` in TypeScript. I want to read types in the code, not rely on IDE hints.
+- Always annotate the type of every variable binding, even where it can be inferred (anonymous types, such as sqlx rows, are the only exception): `let cards: Vec<Card> = ...` in Rust, `const cards: Promise<Card[]> = ...` in TypeScript. I want to read types in the code, not rely on IDE hints.
 - Database tables have singular names (`card`, not `cards`). Applied migrations are never edited; a change goes in a new one.
 - Never annotate closure parameters (`|error| ...`, not `|error: RepoError| ...`); it makes them unreadable.
 
@@ -57,9 +57,12 @@ Svelte 5 with runes only (`$state`, `$derived`, `$effect`, `$props`). Never use 
 - Every interactive element needs a keyboard path and a visible focus ring.
 
 ## Roadmap
-1. Walking skeleton: one card read from SQLite through core, shown in the Svelte UI, with one acceptance test. Done.
-2. Review: due cards and FSRS scheduling (pure domain logic, ideal for TDD). **← current**
-3. Import: parse a source, send it to an LLM, get cards back. AI comes last so the core never depends on it.
+1. Walking skeleton. Done.
+2. Review with FSRS scheduling. Done.
+3. Import: sources in, AI cards out, Inbox. Done.
+4. Library, Tidy up, Settings, backups. Done.
+5. Real use: start learning, then review and upgrade as needs show up. **← current**
+6. Later: card types `typed`, `list`, `explain`, `choice`, `truefalse`, `occlusion` (DESIGN.md §7); a phone or web version.
 
 ## Workflow: ATDD
 For every slice:
@@ -83,8 +86,10 @@ Once I've approved acceptance tests, never change, delete or weaken them to make
 Run from the workspace root. `.env` points sqlx's compile-time checks at `dev.db` (gitignored).
 - `cargo test --workspace`: all Rust tests
 - `cargo tauri dev`: run the app in development
+- `cargo tauri build --bundles app`: build `target/release/bundle/macos/Myosotis.app` (needs `ui/build`, which the build creates)
+- `cargo test -p myosotis-app --lib -- --ignored --nocapture`: tests against the real Claude Code; they use plan limits
 - `cargo sqlx migrate add --source app/migrations <name>` / `cargo sqlx migrate run --source app/migrations`: migrations
 - `cargo sqlx prepare --workspace`: refresh the offline query cache in `.sqlx/` (commit it) after changing any query
 
 ## Open decisions
-- Source parsing for import (text, Markdown, PDF, web pages).
+- Web pages as a source.

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!\", title, status, error, full_text FROM import\n               WHERE status IN ('generating', 'in_inbox', 'failed')\n               ORDER BY id",
+  "query": "SELECT id AS \"id!\", title, status, error, full_text, parts_total, parts_done\n               FROM import\n               WHERE status IN ('generating', 'in_inbox', 'failed')\n               ORDER BY id",
   "describe": {
     "columns": [
       {
@@ -57,6 +57,28 @@
             "name": "full_text"
           }
         }
+      },
+      {
+        "name": "parts_total",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "parts_total"
+          }
+        }
+      },
+      {
+        "name": "parts_done",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "import",
+            "name": "parts_done"
+          }
+        }
       }
     ],
     "parameters": {
@@ -67,8 +89,10 @@
       false,
       false,
       true,
-      true
+      true,
+      false,
+      false
     ]
   },
-  "hash": "5dd365cbd51de221d5dab0dce81e944de9b9d4a131f9e77db25d531c0842e1a6"
+  "hash": "b1d2c488c41711eef8ad59a6ef85ad6b482fda8b5844372dd61f0437a5fd1636"
 }

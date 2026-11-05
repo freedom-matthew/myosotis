@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { FileUp } from '@lucide/svelte';
-	import { startImport, type Depth } from '#lib/api.js';
+	import { readSourceFile, startImport, type Depth } from '#lib/api.js';
 	import Notice from '#lib/components/notice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Kbd } from '#lib/components/ui/kbd/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
@@ -14,7 +15,7 @@
 	type DepthOption = { value: Depth; label: string; cards: number };
 	type InputMode = 'paste' | 'file';
 
-	const SUPPORTED_FILE: RegExp = /\.(txt|md)$/i;
+	const FILE_EXTENSION: RegExp = /\.[^.]+$/;
 
 	const DEPTHS: DepthOption[] = [
 		{ value: 'essentials', label: 'Essentials', cards: 6 },
@@ -30,6 +31,8 @@
 	let starting: boolean = $state(false);
 	let mode: InputMode = $state('paste');
 	let dragging: boolean = $state(false);
+	let reading: boolean = $state(false);
+	let fillInBlank: boolean = $state(true);
 
 	const words: number = $derived(text.trim() === '' ? 0 : text.trim().split(/\s+/).length);
 	const canGenerate: boolean = $derived(title.trim() !== '' && text.trim() !== '' && !starting);
@@ -40,17 +43,15 @@
 	/** Loads a file into the form, so the text can be checked before generating. */
 	async function openFile(file: File): Promise<void> {
 		error = null;
-		if (!SUPPORTED_FILE.test(file.name)) {
-			error = 'Only .txt and .md files can be opened for now.';
-			return;
-		}
+		reading = true;
 		try {
-			text = await file.text();
-			if (title.trim() === '') title = file.name.replace(SUPPORTED_FILE, '');
+			text = await readSourceFile(file);
+			if (title.trim() === '') title = file.name.replace(FILE_EXTENSION, '');
 			mode = 'paste';
 		} catch (reason) {
 			error = String(reason);
 		}
+		reading = false;
 	}
 
 	function onFileChosen(event: Event): void {
@@ -80,7 +81,8 @@
 				title: title.trim(),
 				text,
 				depth,
-				focus: focus.trim() === '' ? null : focus.trim()
+				focus: focus.trim() === '' ? null : focus.trim(),
+				fill_in_blank: fillInBlank
 			});
 			await goto('/inbox');
 		} catch (reason) {
@@ -148,14 +150,14 @@
 					)}
 				>
 					<FileUp size={20} strokeWidth={1.8} class="text-muted-foreground" />
-					<span class="text-base">Drop a file here</span>
-					<span class="font-mono text-xs text-muted-foreground">.txt · .md</span>
+					<span class="text-base">{reading ? 'Reading…' : 'Drop a file here'}</span>
+					<span class="font-mono text-xs text-muted-foreground">.txt · .md · .pdf · .docx</span>
 					<span
 						class="rounded-lg border border-input bg-secondary px-3 py-2 text-sm text-secondary-foreground"
 					>
 						Choose file…
 					</span>
-					<input type="file" accept=".txt,.md" onchange={onFileChosen} class="sr-only" />
+					<input type="file" accept=".txt,.md,.pdf,.docx" onchange={onFileChosen} class="sr-only" />
 				</label>
 			{/if}
 		</div>
@@ -177,6 +179,14 @@
 						</ToggleGroup.Item>
 					{/each}
 				</ToggleGroup.Root>
+			</div>
+			<div class="flex flex-col gap-2">
+				<span class="text-sm font-medium">Card types</span>
+				<span class="text-sm text-muted-foreground">Question and answer, two-way terms</span>
+				<Label for="fill-in-blank" class="font-normal">
+					<Checkbox id="fill-in-blank" bind:checked={fillInBlank} />
+					Fill in the blank
+				</Label>
 			</div>
 			<div class="flex flex-col gap-2">
 				<Label for="focus">

@@ -2,13 +2,15 @@
 #![allow(dead_code)]
 
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use chrono::{DateTime, Duration, TimeZone, Utc};
 use myosotis_app::features::{import_source, inbox, review};
 use myosotis_app::storage::SqliteCardRepo;
 use myosotis_core::{
-    Card, CardExplainer, CardGenerator, Depth, DraftCard, ExplanationRequest, GenerateError,
-    GeneratedCard, GenerationRequest, Grade, ImportId, InboxImport, NewImport, SessionCard,
+    Card, CardExplainer, CardGenerator, CardKind, CardRewriter, Depth, DraftCard,
+    ExplanationRequest, GenerateError, GeneratedCard, GenerationRequest, Grade, ImportId,
+    InboxImport, NewImport, RewriteRequest, SessionCard,
 };
 
 /// Monday morning. Every test starts here, so nothing depends on the real clock.
@@ -54,25 +56,50 @@ pub fn questions(cards: &[SessionCard]) -> Vec<&str> {
 /// Stands in for the AI: returns the cards it was given, or fails.
 pub struct FakeGenerator {
     pub result: Result<Vec<GeneratedCard>, GenerateError>,
+    calls: AtomicUsize,
+    fails_on_call: Option<usize>,
 }
 
 impl FakeGenerator {
+    pub fn with_cards(cards: Vec<GeneratedCard>) -> Self {
+        Self {
+            result: Ok(cards),
+            calls: AtomicUsize::new(0),
+            fails_on_call: None,
+        }
+    }
+
     pub fn producing(questions: &[&str]) -> Self {
         let cards: Vec<GeneratedCard> = questions
             .iter()
             .map(|question| GeneratedCard {
+                kind: CardKind::Qa,
                 question: question.to_string(),
                 answer: format!("Answer to: {question}"),
                 excerpt: format!("Passage about: {question}"),
             })
             .collect();
-        Self { result: Ok(cards) }
+        Self::with_cards(cards)
     }
 
     pub fn failing_with(message: &str) -> Self {
         Self {
             result: Err(GenerateError(message.to_string())),
+            calls: AtomicUsize::new(0),
+            fails_on_call: None,
         }
+    }
+
+    /// Works, except on this call (counted from 1), as if the AI dropped out midway.
+    pub fn failing_on_call(self, call: usize) -> Self {
+        Self {
+            fails_on_call: Some(call),
+            ..self
+        }
+    }
+
+    pub fn calls(&self) -> usize {
+        self.calls.load(Ordering::Relaxed)
     }
 }
 
@@ -81,7 +108,21 @@ impl CardGenerator for FakeGenerator {
         &self,
         _request: &GenerationRequest,
     ) -> Result<Vec<GeneratedCard>, GenerateError> {
+        let call: usize = self.calls.fetch_add(1, Ordering::Relaxed) + 1;
+        if self.fails_on_call == Some(call) {
+            return Err(GenerateError("The AI dropped out".to_string()));
+        }
         self.result.clone()
+    }
+}
+
+pub struct FakeRewriter {
+    pub better: Card,
+}
+
+impl CardRewriter for FakeRewriter {
+    async fn rewrite(&self, _request: &RewriteRequest) -> Result<Card, GenerateError> {
+        Ok(self.better.clone())
     }
 }
 
@@ -119,11 +160,27 @@ impl CardExplainer for FakeExplainer {
 }
 
 pub async fn import_source_with(repo: &SqliteCardRepo, generator: &FakeGenerator) -> ImportId {
+    let text: &str = "Habits form through a loop of cue, routine and reward.";
+    import_text_with(repo, generator, text).await
+}
+
+/// A source long enough to be worked through in three parts.
+pub fn three_part_source() -> String {
+    let paragraph: String = "A sentence that fills the page. ".repeat(800);
+    [paragraph.as_str(); 3].join("\n\n")
+}
+
+pub async fn import_text_with(
+    repo: &SqliteCardRepo,
+    generator: &FakeGenerator,
+    text: &str,
+) -> ImportId {
     let source: NewImport = NewImport {
         title: "Habit notes".to_string(),
-        text: "Habits form through a loop of cue, routine and reward.".to_string(),
+        text: text.to_string(),
         depth: Depth::Balanced,
         focus: None,
+        fill_in_blank: true,
     };
     let import: ImportId = import_source::create(repo, &source, monday())
         .await
