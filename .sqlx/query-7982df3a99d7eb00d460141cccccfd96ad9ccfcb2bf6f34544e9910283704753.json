@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO reviews (\n                 card_id, grade, was_new, reviewed_at, next_due,\n                 previous_due, previous_stability, previous_difficulty,\n                 previous_elapsed_days, previous_scheduled_days, previous_reps,\n                 previous_lapses, previous_phase, previous_last_review\n             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 14
+    },
+    "nullable": []
+  },
+  "hash": "7982df3a99d7eb00d460141cccccfd96ad9ccfcb2bf6f34544e9910283704753"
+}

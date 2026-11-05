@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use myosotis_core::{
-    CardId, DueCard, Grade, RepoError, ReviewRepo, Schedule, SessionCard, plan_session,
+    Card, CardId, DueCard, Grade, RepoError, ReviewRepo, Schedule, SessionCard, plan_session,
     session_horizon,
 };
 use tauri::State;
@@ -26,8 +26,20 @@ pub async fn grade(
 ) -> Result<(), RepoError> {
     let before: Schedule = repo.schedule_of(card).await?;
     let after: Schedule = before.after(grade, now);
-    repo.record_review(card, grade, &after, before.is_new(), now)
-        .await
+    repo.record_review(card, grade, &before, &after, now).await
+}
+
+pub async fn undo(repo: &impl ReviewRepo, card: CardId) -> Result<(), RepoError> {
+    repo.undo_review(card).await
+}
+
+pub async fn edit(
+    repo: &impl ReviewRepo,
+    card: CardId,
+    question: &str,
+    answer: &str,
+) -> Result<(), RepoError> {
+    repo.update_card(card, &Card::new(question, answer)).await
 }
 
 #[tauri::command]
@@ -44,6 +56,25 @@ pub async fn grade_card(
     grade: Grade,
 ) -> Result<(), String> {
     self::grade(repo.inner(), card, grade, Utc::now())
+        .await
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn undo_grade(repo: State<'_, SqliteCardRepo>, card: CardId) -> Result<(), String> {
+    undo(repo.inner(), card)
+        .await
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn edit_card(
+    repo: State<'_, SqliteCardRepo>,
+    card: CardId,
+    question: String,
+    answer: String,
+) -> Result<(), String> {
+    edit(repo.inner(), card, &question, &answer)
         .await
         .map_err(|error| error.to_string())
 }

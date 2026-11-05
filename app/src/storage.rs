@@ -188,28 +188,100 @@ impl ReviewRepo for SqliteCardRepo {
         &self,
         card: CardId,
         grade: Grade,
-        schedule: &Schedule,
-        was_new: bool,
+        before: &Schedule,
+        after: &Schedule,
         now: DateTime<Utc>,
     ) -> Result<(), RepoError> {
         let reviewed_at: String = to_db(now);
-        let due: String = to_db(schedule.due);
+        let next_due: String = to_db(after.due);
         let grade: &str = grade.as_str();
+        let was_new: bool = before.is_new();
+        let previous_due: String = to_db(before.due);
+        let previous_phase: &str = before.phase.as_str();
+        let previous_last_review: String = to_db(before.last_review);
         let mut transaction: SqliteTransaction<'static> = self.begin().await?;
         sqlx::query!(
-            "INSERT INTO reviews (card_id, grade, was_new, reviewed_at, next_due)
-             VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO reviews (
+                 card_id, grade, was_new, reviewed_at, next_due,
+                 previous_due, previous_stability, previous_difficulty,
+                 previous_elapsed_days, previous_scheduled_days, previous_reps,
+                 previous_lapses, previous_phase, previous_last_review
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             card,
             grade,
             was_new,
             reviewed_at,
-            due
+            next_due,
+            previous_due,
+            before.stability,
+            before.difficulty,
+            before.elapsed_days,
+            before.scheduled_days,
+            before.reps,
+            before.lapses,
+            previous_phase,
+            previous_last_review
         )
         .execute(&mut *transaction)
         .await
         .map_err(repo_error)?;
-        save_schedule(&mut transaction, card, schedule).await?;
+        save_schedule(&mut transaction, card, after).await?;
         transaction.commit().await.map_err(repo_error)
+    }
+
+    async fn undo_review(&self, card: CardId) -> Result<(), RepoError> {
+        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
+        let row = sqlx::query!(
+            r#"SELECT id AS "id!", previous_due, previous_stability, previous_difficulty,
+                      previous_elapsed_days, previous_scheduled_days, previous_reps,
+                      previous_lapses, previous_phase, previous_last_review
+               FROM reviews
+               WHERE card_id = ?
+               ORDER BY id DESC
+               LIMIT 1"#,
+            card
+        )
+        .fetch_one(&mut *transaction)
+        .await
+        .map_err(repo_error)?;
+
+        // Reviews from before undo existed have no snapshot, so they stay as they are.
+        if let (Some(due), Some(phase), Some(last_review)) = (
+            row.previous_due,
+            row.previous_phase,
+            row.previous_last_review,
+        ) {
+            let schedule: Schedule = Schedule {
+                due: from_db(&due)?,
+                stability: row.previous_stability.unwrap_or_default(),
+                difficulty: row.previous_difficulty.unwrap_or_default(),
+                elapsed_days: row.previous_elapsed_days.unwrap_or_default(),
+                scheduled_days: row.previous_scheduled_days.unwrap_or_default(),
+                reps: row.previous_reps.unwrap_or_default() as i32,
+                lapses: row.previous_lapses.unwrap_or_default() as i32,
+                phase: Phase::parse(&phase),
+                last_review: from_db(&last_review)?,
+            };
+            save_schedule(&mut transaction, card, &schedule).await?;
+            sqlx::query!("DELETE FROM reviews WHERE id = ?", row.id)
+                .execute(&mut *transaction)
+                .await
+                .map_err(repo_error)?;
+        }
+        transaction.commit().await.map_err(repo_error)
+    }
+
+    async fn update_card(&self, card: CardId, content: &Card) -> Result<(), RepoError> {
+        sqlx::query!(
+            "UPDATE cards SET question = ?, answer = ? WHERE id = ? AND status = 'active'",
+            content.question,
+            content.answer,
+            card
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(repo_error)?;
+        Ok(())
     }
 
     async fn all_due_dates(&self) -> Result<Vec<DateTime<Utc>>, RepoError> {
@@ -409,14 +481,18 @@ impl ImportRepo for SqliteCardRepo {
 
     async fn accept_draft(&self, card: CardId, schedule: &Schedule) -> Result<ImportId, RepoError> {
         let mut transaction: SqliteTransaction<'static> = self.begin().await?;
-        sqlx::query!(
+        let accepted: u64 = sqlx::query!(
             "UPDATE cards SET status = 'active' WHERE id = ? AND status = 'draft'",
             card
         )
         .execute(&mut *transaction)
         .await
-        .map_err(repo_error)?;
-        save_schedule(&mut transaction, card, schedule).await?;
+        .map_err(repo_error)?
+        .rows_affected();
+        // Already accepted: the card may have review progress that must not be reset.
+        if accepted > 0 {
+            save_schedule(&mut transaction, card, schedule).await?;
+        }
         let import: ImportId =
             sqlx::query_scalar!("SELECT import_id FROM origins WHERE card_id = ?", card)
                 .fetch_one(&mut *transaction)

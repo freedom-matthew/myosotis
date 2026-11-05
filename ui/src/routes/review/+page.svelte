@@ -1,11 +1,20 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { FileText, X } from '@lucide/svelte';
-	import { gradeCard, reviewSession, type Grade, type SessionCard } from '#lib/api.js';
+	import { FileText, Undo2, X } from '@lucide/svelte';
+	import {
+		editCard,
+		gradeCard,
+		reviewSession,
+		undoGrade,
+		type Grade,
+		type SessionCard
+	} from '#lib/api.js';
 	import Notice from '#lib/components/notice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
 	import { Kbd } from '#lib/components/ui/kbd/index.js';
 	import { Progress } from '#lib/components/ui/progress/index.js';
+	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { isTyping } from '#lib/keys.js';
 	import { cn } from '#lib/utils.js';
 
@@ -23,6 +32,10 @@
 	let showContext: boolean = $state(false);
 	let saving: boolean = $state(false);
 	let error: string | null = $state(null);
+	let gradedCards: number[] = $state([]);
+	let editing: boolean = $state(false);
+	let editQuestion: string = $state('');
+	let editAnswer: string = $state('');
 
 	const card: SessionCard | undefined = $derived(queue[0]);
 	const total: number = $derived(reviewed + queue.length);
@@ -44,6 +57,7 @@
 		error = null;
 		try {
 			await gradeCard(card.id, choice);
+			gradedCards.push(card.id);
 			reviewed += 1;
 			await loadQueue();
 		} catch (reason) {
@@ -52,15 +66,64 @@
 		saving = false;
 	}
 
+	async function undo(): Promise<void> {
+		const last: number | undefined = gradedCards.at(-1);
+		if (last === undefined || saving) return;
+		saving = true;
+		error = null;
+		try {
+			await undoGrade(last);
+			gradedCards.pop();
+			reviewed -= 1;
+			await loadQueue();
+			const undone: SessionCard | undefined = queue.find((item) => item.id === last);
+			if (undone) queue = [undone, ...queue.filter((item) => item.id !== last)];
+		} catch (reason) {
+			error = String(reason);
+		}
+		saving = false;
+	}
+
+	function startEditing(): void {
+		if (!card) return;
+		editQuestion = card.question;
+		editAnswer = card.answer;
+		editing = true;
+	}
+
+	async function saveEdit(): Promise<void> {
+		if (!card || editQuestion.trim() === '' || editAnswer.trim() === '') return;
+		error = null;
+		try {
+			await editCard(card.id, editQuestion, editAnswer);
+			card.question = editQuestion;
+			card.answer = editAnswer;
+			editing = false;
+		} catch (reason) {
+			error = String(reason);
+		}
+	}
+
 	function onkeydown(event: KeyboardEvent): void {
+		if (editing) {
+			if (event.key === 'Escape') editing = false;
+			if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) saveEdit();
+			return;
+		}
 		if (isTyping(event)) return;
-		if (event.key === 'Escape') {
+		if (event.key === 'z') {
+			undo();
+		} else if (event.key === 'Escape') {
 			goto('/');
 		} else if (event.key === ' ') {
 			event.preventDefault();
 			if (card) revealed = true;
 		} else if (revealed && card) {
 			if (event.key === 'c' && card.excerpt) showContext = !showContext;
+			if (event.key === 'e') {
+				event.preventDefault();
+				startEditing();
+			}
 			const position: number = ['1', '2', '3', '4'].indexOf(event.key);
 			if (position >= 0) grade(card.grades[position].grade);
 		}
@@ -82,7 +145,14 @@
 				<Progress value={reviewed} max={total} class="h-0.75" />
 			{/if}
 		</div>
-		<div class="w-32"></div>
+		<Button
+			variant="ghost"
+			onclick={undo}
+			disabled={gradedCards.length === 0 || saving}
+			class="gap-2 text-foreground-secondary"
+		>
+			<Undo2 size={15} />Undo <span class="font-mono text-xs text-muted-foreground">Z</span>
+		</Button>
 	</header>
 
 	{#if error}
@@ -99,9 +169,21 @@
 						<FileText size={13} />{card.source_title}
 					</span>
 				{/if}
-				<h1 class="font-serif text-3xl leading-tight font-normal text-pretty">{card.question}</h1>
+				{#if editing}
+					<Input bind:value={editQuestion} aria-label="Question" class="h-9 font-serif text-base" />
+					<Textarea bind:value={editAnswer} aria-label="Answer" class="font-serif text-base" />
+					<div class="flex gap-2">
+						<Button onclick={saveEdit} class="gap-2">
+							Save
+							<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">⌘↵</Kbd>
+						</Button>
+						<Button variant="ghost" onclick={() => (editing = false)}>Cancel</Button>
+					</div>
+				{:else}
+					<h1 class="font-serif text-3xl leading-tight font-normal text-pretty">{card.question}</h1>
+				{/if}
 
-				{#if revealed}
+				{#if revealed && !editing}
 					<div class="flex animate-reveal flex-col gap-5">
 						<div class="h-px bg-border"></div>
 						<p class="font-serif text-xl leading-normal text-pretty text-card-answer">
@@ -115,8 +197,16 @@
 								<p class="font-serif text-base leading-normal text-card-answer">{card.excerpt}</p>
 							</div>
 						{/if}
-						{#if card.excerpt}
-							<div class="-ml-2.5">
+						<div class="-ml-2.5 flex gap-1">
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={startEditing}
+								class="gap-1.5 text-xs text-foreground-secondary"
+							>
+								Edit card <span class="font-mono text-muted-foreground">E</span>
+							</Button>
+							{#if card.excerpt}
 								<Button
 									variant="ghost"
 									size="sm"
@@ -125,8 +215,8 @@
 								>
 									Show context <span class="font-mono text-muted-foreground">C</span>
 								</Button>
-							</div>
-						{/if}
+							{/if}
+						</div>
 					</div>
 				{/if}
 			</article>

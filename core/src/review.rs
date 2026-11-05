@@ -262,9 +262,18 @@ pub trait ReviewRepo {
         &self,
         card: CardId,
         grade: Grade,
-        schedule: &Schedule,
-        was_new: bool,
+        before: &Schedule,
+        after: &Schedule,
         now: DateTime<Utc>,
+    ) -> impl Future<Output = Result<(), RepoError>> + Send;
+
+    /// Takes back the card's latest review, restoring the schedule from before it.
+    fn undo_review(&self, card: CardId) -> impl Future<Output = Result<(), RepoError>> + Send;
+
+    fn update_card(
+        &self,
+        card: CardId,
+        content: &Card,
     ) -> impl Future<Output = Result<(), RepoError>> + Send;
 
     /// The due date of every active card, for forecasts.

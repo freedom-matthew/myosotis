@@ -3,7 +3,7 @@ mod common;
 use common::*;
 use myosotis_app::features::{import_source, inbox};
 use myosotis_app::storage::SqliteCardRepo;
-use myosotis_core::{DraftCard, ImportId, ImportStatus, InboxImport, SessionCard};
+use myosotis_core::{DraftCard, Grade, ImportId, ImportStatus, InboxImport, SessionCard};
 
 #[tokio::test]
 async fn generated_cards_wait_in_the_inbox_and_are_not_reviewed_yet() {
@@ -149,4 +149,21 @@ async fn generating_no_cards_counts_as_a_failure() {
 
     // then I am told, rather than the source silently vanishing
     assert_eq!(the_inbox(&repo).await[0].status, ImportStatus::Failed);
+}
+
+#[tokio::test]
+async fn accepting_a_card_twice_does_not_reset_what_i_learned() {
+    // given a card I accepted and then learned
+    let repo: SqliteCardRepo = empty_collection().await;
+    import_source_with(&repo, &FakeGenerator::producing(&["Cue?"])).await;
+    let drafts: Vec<DraftCard> = drafts_in_inbox(&repo).await;
+    inbox::accept(&repo, drafts[0].id, monday()).await.unwrap();
+    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
+    grade(&repo, &session[0], Grade::Easy, monday()).await;
+
+    // when the same card is accepted again, say by a double key press
+    inbox::accept(&repo, drafts[0].id, monday()).await.unwrap();
+
+    // then it stays scheduled for later
+    assert!(session_at(&repo, monday()).await.is_empty());
 }

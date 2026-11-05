@@ -1,6 +1,8 @@
 mod common;
 
+use chrono::{DateTime, Utc};
 use common::*;
+use myosotis_app::features::review;
 use myosotis_app::storage::SqliteCardRepo;
 use myosotis_core::{Grade, SessionCard};
 
@@ -139,4 +141,71 @@ async fn every_review_is_kept_in_the_cards_history() {
 
     // then both reviews are recorded
     assert_eq!(repo.review_count(session[0].id).await.unwrap(), 2);
+}
+
+#[tokio::test]
+async fn undo_puts_a_card_back_as_if_it_was_never_graded() {
+    // given a new card I graded Easy by mistake
+    let repo: SqliteCardRepo = collection_with_cards(1).await;
+    let before: Vec<SessionCard> = session_at(&repo, monday()).await;
+    grade(&repo, &before[0], Grade::Easy, monday()).await;
+
+    // when I undo
+    review::undo(&repo, before[0].id).await.unwrap();
+
+    // then it is back in the session with the same intervals, and the review is gone
+    let after: Vec<SessionCard> = session_at(&repo, monday()).await;
+    assert_eq!(after, before);
+    assert_eq!(repo.review_count(before[0].id).await.unwrap(), 0);
+}
+
+#[tokio::test]
+async fn undo_only_takes_back_the_latest_grade() {
+    // given a card I graded twice
+    let repo: SqliteCardRepo = collection_with_cards(1).await;
+    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
+    grade(&repo, &session[0], Grade::Again, monday()).await;
+    grade(&repo, &session[0], Grade::Easy, minutes_later(monday(), 5)).await;
+
+    // when I undo once
+    review::undo(&repo, session[0].id).await.unwrap();
+
+    // then the first grade still stands
+    assert_eq!(repo.review_count(session[0].id).await.unwrap(), 1);
+}
+
+#[tokio::test]
+async fn undone_new_cards_no_longer_count_towards_the_daily_limit() {
+    // given 21 new cards, one started then undone
+    let repo: SqliteCardRepo = collection_with_cards(21).await;
+    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
+    grade(&repo, &session[0], Grade::Easy, monday()).await;
+    review::undo(&repo, session[0].id).await.unwrap();
+
+    // when I look at the session again
+    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
+
+    // then the full 20 are still offered
+    assert_eq!(session.len(), 20);
+}
+
+#[tokio::test]
+async fn editing_a_card_during_review_keeps_its_progress() {
+    // given a card I have already learned
+    let repo: SqliteCardRepo = collection_with_cards(1).await;
+    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
+    grade(&repo, &session[0], Grade::Easy, monday()).await;
+    let due_again: DateTime<Utc> = days_later(monday(), 30);
+    let before: Vec<SessionCard> = session_at(&repo, due_again).await;
+
+    // when I reword it
+    review::edit(&repo, before[0].id, "Better question", "Better answer")
+        .await
+        .unwrap();
+
+    // then the new wording shows, with the intervals unchanged
+    let after: Vec<SessionCard> = session_at(&repo, due_again).await;
+    assert_eq!(after[0].question, "Better question");
+    assert_eq!(after[0].answer, "Better answer");
+    assert_eq!(after[0].grades, before[0].grades);
 }

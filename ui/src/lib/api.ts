@@ -52,6 +52,9 @@ export const todaySummary = (): Promise<TodaySummary> => invoke('today_summary')
 export const reviewSession = (): Promise<SessionCard[]> => invoke('review_session');
 export const gradeCard = (card: number, grade: Grade): Promise<void> =>
 	invoke('grade_card', { card, grade });
+export const undoGrade = (card: number): Promise<void> => invoke('undo_grade', { card });
+export const editCard = (card: number, question: string, answer: string): Promise<void> =>
+	invoke('edit_card', { card, question, answer });
 export const startImport = (source: NewImport): Promise<number> =>
 	invoke('start_import', { source });
 export const retryImport = (id: number): Promise<void> => invoke('retry_import', { import: id });

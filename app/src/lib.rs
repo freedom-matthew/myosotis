@@ -27,6 +27,8 @@ pub fn run() {
             today::today_summary,
             review::review_session,
             review::grade_card,
+            review::undo_grade,
+            review::edit_card,
             import_source::start_import,
             import_source::retry_import,
             inbox::inbox,
