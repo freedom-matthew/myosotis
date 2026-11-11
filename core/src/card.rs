@@ -5,30 +5,33 @@ use serde::{Deserialize, Serialize};
 
 pub type CardId = i64;
 
-/// How a card is reviewed. The `Cloze` question holds its gap as `{{text}}`.
+/// How a card is reviewed.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum CardKind {
+    /// A question with a short answer.
     #[default]
-    Qa,
-    Cloze,
-    Reverse,
+    Question,
+    /// A term and its meaning, reviewed both ways round.
+    Concept,
+    /// An open question answered in your own words, marked by the AI.
+    Describe,
 }
 
 impl CardKind {
     pub fn as_str(self) -> &'static str {
         match self {
-            CardKind::Qa => "qa",
-            CardKind::Cloze => "cloze",
-            CardKind::Reverse => "reverse",
+            CardKind::Question => "question",
+            CardKind::Concept => "concept",
+            CardKind::Describe => "describe",
         }
     }
 
     pub fn parse(value: &str) -> Self {
         match value {
-            "cloze" => CardKind::Cloze,
-            "reverse" => CardKind::Reverse,
-            _ => CardKind::Qa,
+            "concept" => CardKind::Concept,
+            "describe" => CardKind::Describe,
+            _ => CardKind::Question,
         }
     }
 }

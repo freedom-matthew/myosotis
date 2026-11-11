@@ -243,7 +243,7 @@ pub fn plan_session(
         .collect()
 }
 
-/// Keeps the two directions of a reverse card out of the same day, because seeing one
+/// Keeps the two directions of a concept card out of the same day, because seeing one
 /// gives away the other.
 fn apart_from_siblings(cards: Vec<DueCard>, reviewed_today: &[CardId]) -> Vec<DueCard> {
     let mut taken: Vec<CardId> = reviewed_today.to_vec();

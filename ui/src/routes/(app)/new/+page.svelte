@@ -32,7 +32,7 @@
 	let mode: InputMode = $state('paste');
 	let dragging: boolean = $state(false);
 	let reading: boolean = $state(false);
-	let fillInBlank: boolean = $state(true);
+	let describe: boolean = $state(true);
 
 	const words: number = $derived(text.trim() === '' ? 0 : text.trim().split(/\s+/).length);
 	const canGenerate: boolean = $derived(title.trim() !== '' && text.trim() !== '' && !starting);
@@ -82,7 +82,7 @@
 				text,
 				depth,
 				focus: focus.trim() === '' ? null : focus.trim(),
-				fill_in_blank: fillInBlank
+				describe
 			});
 			await goto('/inbox');
 		} catch (reason) {
@@ -182,10 +182,10 @@
 			</div>
 			<div class="flex flex-col gap-2">
 				<span class="text-sm font-medium">Card types</span>
-				<span class="text-sm text-muted-foreground">Question and answer, two-way terms</span>
-				<Label for="fill-in-blank" class="font-normal">
-					<Checkbox id="fill-in-blank" bind:checked={fillInBlank} />
-					Fill in the blank
+				<span class="text-sm text-muted-foreground">Questions and concepts</span>
+				<Label for="describe" class="font-normal">
+					<Checkbox id="describe" bind:checked={describe} />
+					Describe in your own words
 				</Label>
 			</div>
 			<div class="flex flex-col gap-2">

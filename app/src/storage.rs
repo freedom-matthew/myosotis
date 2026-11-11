@@ -66,7 +66,7 @@ impl SqliteCardRepo {
     pub async fn insert(&self, card: &Card) -> Result<(), RepoError> {
         let created_at: String = to_db(Utc::now());
         sqlx::query!(
-            "INSERT INTO card (question, answer, created_at) VALUES (?, ?, ?)",
+            "INSERT INTO card (kind, question, answer, created_at) VALUES ('question', ?, ?, ?)",
             card.question,
             card.answer,
             created_at
@@ -592,7 +592,7 @@ impl ImportRepo for SqliteCardRepo {
         let depth: &str = import.depth.as_str();
         let status: &str = ImportStatus::Generating.as_str();
         sqlx::query_scalar!(
-            r#"INSERT INTO import (title, full_text, status, depth, focus, fill_in_blank, created_at)
+            r#"INSERT INTO import (title, full_text, status, depth, focus, describe, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?)
                RETURNING id AS "id!""#,
             import.title,
@@ -600,7 +600,7 @@ impl ImportRepo for SqliteCardRepo {
             status,
             depth,
             import.focus,
-            import.fill_in_blank,
+            import.describe,
             created_at
         )
         .fetch_one(&self.pool)
@@ -610,7 +610,7 @@ impl ImportRepo for SqliteCardRepo {
 
     async fn generation_request(&self, import: ImportId) -> Result<GenerationRequest, RepoError> {
         let row = sqlx::query!(
-            r#"SELECT title, full_text, depth, focus, fill_in_blank AS "fill_in_blank: bool"
+            r#"SELECT title, full_text, depth, focus, describe AS "describe: bool"
                FROM import WHERE id = ?"#,
             import
         )
@@ -623,7 +623,7 @@ impl ImportRepo for SqliteCardRepo {
             text: row.full_text.unwrap_or_default(),
             target_cards: Depth::parse(&row.depth).target_cards(),
             focus: row.focus,
-            fill_in_blank: row.fill_in_blank,
+            describe: row.describe,
         })
     }
 
@@ -898,7 +898,7 @@ impl ImportRepo for SqliteCardRepo {
         // Already accepted: the card may have review progress that must not be reset.
         if accepted > 0 {
             save_schedule(&mut transaction, card, schedule).await?;
-            add_reverse_sibling(&mut transaction, card).await?;
+            add_other_direction(&mut transaction, card).await?;
         }
         let import: ImportId =
             sqlx::query_scalar!("SELECT import_id FROM origin WHERE card_id = ?", card)
@@ -1000,15 +1000,15 @@ impl ImportRepo for SqliteCardRepo {
     }
 }
 
-/// A reverse card is reviewed both ways, so accepting one adds the other direction.
-async fn add_reverse_sibling(
+/// A concept card is reviewed both ways, so accepting one adds the other direction.
+async fn add_other_direction(
     transaction: &mut SqliteTransaction<'static>,
     card: CardId,
 ) -> Result<(), RepoError> {
     let sibling: Option<i64> = sqlx::query_scalar!(
         r#"INSERT INTO card (kind, question, answer, status, created_at, due, last_review, sibling_id)
            SELECT kind, answer, question, 'active', created_at, due, last_review, id
-           FROM card WHERE id = ? AND kind = 'reverse'
+           FROM card WHERE id = ? AND kind = 'concept'
            RETURNING id AS "id!""#,
         card
     )

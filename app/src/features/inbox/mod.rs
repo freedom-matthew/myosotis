@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use myosotis_core::{
-    Card, CardId, CardKind, CardRewriter, DraftCard, GenerateError, ImportId, ImportRepo,
-    InboxImport, RepoError, RewriteRequest, Schedule,
+    Card, CardId, CardRewriter, DraftCard, GenerateError, ImportId, ImportRepo, InboxImport,
+    RepoError, RewriteRequest, Schedule,
 };
 use tauri::State;
 
@@ -73,12 +73,7 @@ pub async fn rewrite(
         excerpt: draft.excerpt,
     };
     let better: Card = rewriter.rewrite(&request).await?;
-    let question: String = if request.kind == CardKind::Cloze && !better.question.contains("{{") {
-        request.question
-    } else {
-        better.question
-    };
-    repo.update_draft(card, &Card::new(question, better.answer))
+    repo.update_draft(card, &better)
         .await
         .map_err(|error| GenerateError(error.to_string()))
 }

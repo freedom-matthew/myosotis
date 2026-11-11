@@ -8,9 +8,9 @@ use chrono::{DateTime, Duration, TimeZone, Utc};
 use myosotis_app::features::{import_source, inbox, review};
 use myosotis_app::storage::SqliteCardRepo;
 use myosotis_core::{
-    Card, CardExplainer, CardGenerator, CardKind, CardRewriter, Depth, DraftCard,
+    Card, CardExplainer, CardGenerator, CardKind, CardMarker, CardRewriter, Depth, DraftCard,
     ExplanationRequest, GenerateError, GeneratedCard, GenerationRequest, Grade, ImportId,
-    InboxImport, NewImport, RewriteRequest, SessionCard,
+    InboxImport, Marking, MarkingRequest, NewImport, RewriteRequest, SessionCard,
 };
 
 /// Monday morning. Every test starts here, so nothing depends on the real clock.
@@ -73,7 +73,7 @@ impl FakeGenerator {
         let cards: Vec<GeneratedCard> = questions
             .iter()
             .map(|question| GeneratedCard {
-                kind: CardKind::Qa,
+                kind: CardKind::Question,
                 question: question.to_string(),
                 answer: format!("Answer to: {question}"),
                 excerpt: format!("Passage about: {question}"),
@@ -159,6 +159,59 @@ impl CardExplainer for FakeExplainer {
     }
 }
 
+/// Stands in for the AI when marking a description: remembers what it was asked.
+pub struct FakeMarker {
+    result: Result<Marking, GenerateError>,
+    requests: Mutex<Vec<MarkingRequest>>,
+}
+
+impl FakeMarker {
+    pub fn replying(marking: Marking) -> Self {
+        Self {
+            result: Ok(marking),
+            requests: Mutex::new(Vec::new()),
+        }
+    }
+
+    pub fn failing_with(message: &str) -> Self {
+        Self {
+            result: Err(GenerateError(message.to_string())),
+            requests: Mutex::new(Vec::new()),
+        }
+    }
+
+    pub fn last_request(&self) -> MarkingRequest {
+        self.requests.lock().unwrap().last().unwrap().clone()
+    }
+}
+
+impl CardMarker for FakeMarker {
+    async fn mark(&self, request: &MarkingRequest) -> Result<Marking, GenerateError> {
+        self.requests.lock().unwrap().push(request.clone());
+        self.result.clone()
+    }
+}
+
+/// An accepted card of this kind, from a source with this passage.
+pub async fn accepted_card(
+    repo: &SqliteCardRepo,
+    kind: CardKind,
+    question: &str,
+    answer: &str,
+) -> Vec<SessionCard> {
+    let card: GeneratedCard = GeneratedCard {
+        kind,
+        question: question.to_string(),
+        answer: answer.to_string(),
+        excerpt: "A passage.".to_string(),
+    };
+    import_source_with(repo, &FakeGenerator::with_cards(vec![card])).await;
+    for draft in drafts_in_inbox(repo).await {
+        inbox::accept(repo, draft.id, monday()).await.unwrap();
+    }
+    session_at(repo, monday()).await
+}
+
 pub async fn import_source_with(repo: &SqliteCardRepo, generator: &FakeGenerator) -> ImportId {
     let text: &str = "Habits form through a loop of cue, routine and reward.";
     import_text_with(repo, generator, text).await
@@ -180,7 +233,7 @@ pub async fn import_text_with(
         text: text.to_string(),
         depth: Depth::Balanced,
         focus: None,
-        fill_in_blank: true,
+        describe: true,
     };
     let import: ImportId = import_source::create(repo, &source, monday())
         .await

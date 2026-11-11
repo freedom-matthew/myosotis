@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Check } from '@lucide/svelte';
+	import { KIND_LABELS } from '#lib/card-kind.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { toast } from 'svelte-sonner';
 	import {
 		acceptAllDrafts,
@@ -16,7 +18,6 @@
 		type DraftCard,
 		type InboxImport
 	} from '#lib/api.js';
-	import CardQuestion from '#lib/components/card-question.svelte';
 	import Notice from '#lib/components/notice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -238,7 +239,7 @@
 									<div class="flex flex-col gap-1">
 										<span class="text-xs text-muted-foreground">New · from this source</span>
 										<p class="font-serif text-base">
-											<CardQuestion kind={draft.kind} question={draft.question} />
+											{draft.question}
 										</p>
 										<p class="text-sm text-card-answer">{draft.answer}</p>
 									</div>
@@ -272,12 +273,13 @@
 									</Button>
 								</div>
 							{:else}
-								<h2 class="font-serif text-lg font-normal">
-									<CardQuestion kind={draft.kind} question={draft.question} />
-								</h2>
-								{#if draft.kind !== 'cloze'}
-									<p class="font-serif text-base text-card-answer">{draft.answer}</p>
+								{#if draft.kind !== 'question'}
+									<Badge variant="secondary" class="self-start">{KIND_LABELS[draft.kind]}</Badge>
 								{/if}
+								<h2 class="font-serif text-lg font-normal">
+									{draft.question}
+								</h2>
+								<p class="font-serif text-base text-card-answer">{draft.answer}</p>
 								<div class="flex flex-wrap gap-1">
 									<Button onclick={() => act(() => acceptDraft(draft.id))} class="gap-2">
 										<Check size={14} />Accept
@@ -310,12 +312,15 @@
 							}}
 							class="rounded-xl border bg-card p-4 text-left transition-colors hover:border-input"
 						>
+							{#if draft.kind !== 'question'}
+								<span class="text-xs text-muted-foreground">{KIND_LABELS[draft.kind]}</span>
+							{/if}
 							<span class="block font-serif text-lg">
-								<CardQuestion kind={draft.kind} question={draft.question} />
+								{draft.question}
 							</span>
 							{#if draft.duplicate}
 								<span class="text-xs text-hook-foreground">Possible duplicate</span>
-							{:else if draft.kind !== 'cloze'}
+							{:else}
 								<span class="block truncate text-sm text-muted-foreground">{draft.answer}</span>
 							{/if}
 						</button>
@@ -342,9 +347,8 @@
 			{/if}
 		</footer>
 	{:else if loaded && failed.length === 0 && generating.length === 0}
-		<div class="flex flex-1 flex-col items-center justify-center gap-4">
+		<div class="flex flex-1 items-center justify-center">
 			<h1 class="font-serif text-3xl font-normal">Nothing to check.</h1>
-			<Button href="/new" variant="secondary">New source</Button>
 		</div>
 	{/if}
 </div>

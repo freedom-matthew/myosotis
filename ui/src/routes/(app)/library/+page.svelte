@@ -10,7 +10,6 @@
 		type LibraryCard,
 		type TidyGroup
 	} from '#lib/api.js';
-	import { withoutGapMarks } from '#lib/cloze.js';
 	import Notice from '#lib/components/notice.svelte';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -231,7 +230,7 @@
 							class={cn(card.id === selectedId && 'bg-primary-soft hover:bg-primary-soft')}
 						>
 							<Table.Cell class="max-w-64 truncate font-serif text-base">
-								{withoutGapMarks(card.question)}
+								{card.question}
 							</Table.Cell>
 							<Table.Cell class="max-w-32 truncate text-xs text-muted-foreground">
 								{card.source_title ?? '—'}

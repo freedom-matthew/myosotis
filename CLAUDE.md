@@ -36,7 +36,7 @@ Rules:
 - Organise by feature (vertical slices), not by technical layer.
 - Accept some duplication between slices; extract shared code only once a pattern has repeated about three times.
 - Store all times in UTC. API key lives in the OS keyring, never in SQLite or files.
-- For now the LLM is called through the user's own installed Claude Code (`claude -p`, their Pro login), behind `CardGenerator` and `CardExplainer`. Use the `opus` alias, so it's always the latest Opus. The app never reads or stores Claude credentials.
+- For now the LLM is called through the user's own installed Claude Code (`claude -p`, their Pro login), behind `CardGenerator`, `CardExplainer`, `CardRewriter` and `CardMarker`. Use the `opus` alias, so it's always the latest Opus. The app never reads or stores Claude credentials.
 - Don't add new dependencies without asking first.
 
 ## Code style
@@ -62,7 +62,9 @@ Svelte 5 with runes only (`$state`, `$derived`, `$effect`, `$props`). Never use 
 3. Import: sources in, AI cards out, Inbox. Done.
 4. Library, Tidy up, Settings, backups. Done.
 5. Real use: start learning, then review and upgrade as needs show up. **← current**
-6. Later: card types `typed`, `list`, `explain`, `choice`, `truefalse`, `occlusion` (DESIGN.md §7); a phone or web version.
+6. Later: a phone or web version.
+
+Card types are deliberately three: `question`, `concept` and `describe` (DESIGN.md §7).
 
 ## Workflow: ATDD
 For every slice:
@@ -77,6 +79,7 @@ Acceptance tests are where I think and set requirements, so write them for me to
 Once I've approved acceptance tests, never change, delete or weaken them to make them pass. If one looks wrong, stop and tell me why. Your own unit tests for internals go in `#[cfg(test)]` modules; mention them when you add them.
 
 ## How to work with me
+- Acceptance tests are the one strict area: they validate features, and I own them. Everything else (code, structure, DESIGN.md, mockups, this file) is yours to change when it makes sense; just tell me what you changed.
 - Experienced in C#/.NET, new to Rust, Svelte and Tauri. When code uses a non-obvious Rust concept (ownership, lifetimes, traits, macros), explain it in a sentence or two, ideally with a C# comparison.
 - Help me think, don't think for me. On design decisions, ask for my approach first, then give feedback. I decide the domain model (e.g. what a `Card` is).
 - Prefer small, reviewable steps. Be brief and direct.

@@ -1,4 +1,5 @@
 mod card;
+mod describe;
 mod explain;
 mod import;
 mod library;
@@ -10,6 +11,7 @@ mod tidy;
 mod today;
 
 pub use card::{Card, CardId, CardKind, CardRepo, RepoError};
+pub use describe::{CardMarker, Marking, MarkingRequest};
 pub use explain::{CardExplainer, ExplanationRequest};
 pub use import::{
     CardGenerator, CardRewriter, Depth, DraftCard, DraftToStore, ExistingCard, GenerateError,

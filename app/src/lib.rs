@@ -41,6 +41,7 @@ pub fn run() {
             review::undo_grade,
             review::edit_card,
             review::explain_card,
+            review::mark_description,
             settings::get_settings,
             settings::update_settings,
             settings::claude_status,

@@ -48,7 +48,8 @@ pub struct NewImport {
     pub text: String,
     pub depth: Depth,
     pub focus: Option<String>,
-    pub fill_in_blank: bool,
+    /// Whether the AI may also make Describe cards.
+    pub describe: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -87,7 +88,7 @@ pub struct GenerationRequest {
     pub text: String,
     pub target_cards: u32,
     pub focus: Option<String>,
-    pub fill_in_blank: bool,
+    pub describe: bool,
 }
 
 /// What the AI returns for one card.
@@ -98,32 +99,6 @@ pub struct GeneratedCard {
     pub question: String,
     pub answer: String,
     pub excerpt: String,
-}
-
-impl GeneratedCard {
-    /// A fill-the-gap card without a marked gap can't be reviewed as one, and its answer
-    /// is always the gap's text.
-    pub fn normalised(self) -> Self {
-        if self.kind != CardKind::Cloze {
-            return self;
-        }
-        match gap_text(&self.question) {
-            Some(gap) => Self {
-                answer: gap,
-                ..self
-            },
-            None => Self {
-                kind: CardKind::Qa,
-                ..self
-            },
-        }
-    }
-}
-
-fn gap_text(question: &str) -> Option<String> {
-    let (_, rest) = question.split_once("{{")?;
-    let (gap, _) = rest.split_once("}}")?;
-    (!gap.trim().is_empty()).then(|| gap.trim().to_string())
 }
 
 /// Splits a long source at paragraph breaks, so each part fits one AI call.

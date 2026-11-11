@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { libraryCards, type LibraryCard } from '#lib/api.js';
-	import { withoutGapMarks } from '#lib/cloze.js';
 	import * as Command from '#lib/components/ui/command/index.js';
 
 	type Action = { label: string; route: string };
@@ -45,7 +44,7 @@
 						value={`${card.id} ${card.question} ${card.answer} ${card.source_title ?? ''}`}
 						onSelect={() => go(`/library?card=${card.id}`)}
 					>
-						<span class="truncate">{withoutGapMarks(card.question)}</span>
+						<span class="truncate">{card.question}</span>
 					</Command.Item>
 				{/each}
 			</Command.Group>

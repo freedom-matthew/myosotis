@@ -2,7 +2,6 @@
 	import { Check } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { markNotDuplicates, mergeGroup, tidyGroups, type TidyGroup, type TidyMember } from '#lib/api.js';
-	import { withoutGapMarks } from '#lib/cloze.js';
 	import Notice from '#lib/components/notice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -111,7 +110,7 @@
 				<div class="grid auto-cols-fr grid-flow-col gap-4">
 					{#each item.members as member (member.id)}
 						<div class="flex flex-col gap-1.5">
-							<p class="font-serif text-base">{withoutGapMarks(member.question)}</p>
+							<p class="font-serif text-base">{member.question}</p>
 							<p class="text-sm text-card-answer">{member.answer}</p>
 							<span class="text-xs text-muted-foreground">
 								{member.source_title ?? 'Added by hand'} · {member.review_count} reviews
@@ -132,7 +131,7 @@
 						<Input bind:value={question} aria-label="Question" class="h-9 bg-card" />
 						<Textarea bind:value={answer} aria-label="Answer" class="bg-card" />
 					{:else}
-						<p class="font-serif text-lg">{withoutGapMarks(question)}</p>
+						<p class="font-serif text-lg">{question}</p>
 						<p class="text-sm text-card-answer">{answer}</p>
 					{/if}
 					<span class="text-xs text-muted-foreground">Keeps every source.</span>
@@ -155,7 +154,7 @@
 				onclick={() => open(index)}
 				class="flex items-center justify-between gap-4 rounded-xl border bg-card px-4 py-3 text-left text-sm hover:border-input"
 			>
-				<span class="truncate font-serif text-base">{withoutGapMarks(item.suggested_question)}</span>
+				<span class="truncate font-serif text-base">{item.suggested_question}</span>
 				<span class="shrink-0 text-xs text-muted-foreground">{item.members.length} cards</span>
 			</button>
 		{/if}

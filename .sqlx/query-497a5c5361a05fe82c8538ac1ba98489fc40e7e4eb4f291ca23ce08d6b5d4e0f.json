@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT title, full_text, depth, focus, fill_in_blank AS \"fill_in_blank: bool\"\n               FROM import WHERE id = ?",
+  "query": "SELECT title, full_text, depth, focus, describe AS \"describe: bool\"\n               FROM import WHERE id = ?",
   "describe": {
     "columns": [
       {
@@ -48,13 +48,13 @@
         }
       },
       {
-        "name": "fill_in_blank: bool",
+        "name": "describe: bool",
         "ordinal": 4,
         "type_info": "Integer",
         "origin": {
           "Table": {
             "table": "import",
-            "name": "fill_in_blank"
+            "name": "describe"
           }
         }
       }
@@ -70,5 +70,5 @@
       false
     ]
   },
-  "hash": "7d953ede0a5b98a99e2b0156583548603be04361a576118ddd0cf8fb7fb38986"
+  "hash": "497a5c5361a05fe82c8538ac1ba98489fc40e7e4eb4f291ca23ce08d6b5d4e0f"
 }

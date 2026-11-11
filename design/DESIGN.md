@@ -38,7 +38,7 @@ All tokens live in `theme.css`. Highlights:
 | `muted-foreground` | `#66645F` | captions, metadata (AA on paper and white) |
 | `card` / `card-border` / `card-answer` | `#FFFFFF` / `#E8E4DB` / `#34353A` | flashcard, panels / its hairline / answer + excerpt text |
 | `primary` / `primary-strong` | `#3E6FB0` / `#2C5590` | forget-me-not blue / link hover, badge text |
-| `primary-soft` / `primary-tint` | `#EEF3FA` / `#DCE6F4` | selected row, suggested merge / badges, revealed cloze |
+| `primary-soft` / `primary-tint` | `#EEF3FA` / `#DCE6F4` | selected row, suggested merge / badges |
 | `secondary` | `#FBFAF7` | grade buttons, secondary buttons, excerpt boxes |
 | `muted` | `#F4F1EA` | explanation box, status pills |
 | `accent` | `#E5E1D8` | hover / active nav item |
@@ -139,7 +139,7 @@ States: nothing due → "Nothing due today." + next due time. No API key → qui
 - Done state: "That is everything for now." + next due summary + **Back to Today**.
 
 ### New source — `screens/Import.dc.html`
-Title + helper text; segmented **Paste text | Open file**. Left: Title input, Text textarea (serif 16, word count) or dashed drop zone. Right panel: **How much to extract** (Essentials ~6 / Balanced ~14 / Thorough ~30), **Card types** (Q&A, Fill in the blank), **Focus on** (optional), **Generate cards** (`⌘↵`) + "model · about N cards". Generating goes straight to the Inbox; cards stream in.
+Title + helper text; segmented **Paste text | Open file**. Left: Title input, Text textarea (serif 16, word count) or dashed drop zone. Right panel: **How much to extract** (Essentials ~6 / Balanced ~14 / Thorough ~30), **Card types** (questions and concepts always; checkbox "Describe in your own words"), **Focus on** (optional), **Generate cards** (`⌘↵`) + "model · about N cards". Generating goes straight to the Inbox; cards stream in.
 
 ### Inbox — `screens/Curate.dc.html`
 - Header: source title, status line ("2 accepted · 3 to check · 1 possible duplicate · still generating…"), **Accept all remaining** (`⇧A`).
@@ -165,21 +165,17 @@ Single 720px column of white sections; rows = label (+ helper) left, control rig
 
 ## 7. Card types — `mockups/card-types/`
 
-All types share the review shell; previews show front and back at ~80% scale (question 24px instead of 30px). Same anatomy everywhere: origin line → question → (back) divider → answer → extras.
+Three types, deliberately. All share the review shell: origin line → question → (back) divider → answer → extras. The origin line names the type for Concept ("⇄ Concept, both ways round") and Describe ("In your own words").
 
-| # | Type | Ship | Front → back | Grading |
-|---|---|---|---|---|
-| 1 | `qa` Question & answer | **v1** | question → answer (+ optional memory hook in `hook` colours) | manual 1–4 |
-| 2 | `cloze` Fill the gap | **v1** | sentence with a blank (`primary-soft` pill, optional hint) → filled, `primary-tint` | manual; one card per gap |
-| 3 | `reverse` Two-way term | **v1** | term (+ pronunciation) → meaning, plus the reverse card | manual; siblings scheduled apart |
-| 4 | `typed` Type the answer | v1.1 | question + input → character diff (`warn-soft` vs `primary-tint`) | suggested |
-| 5 | `list` List / sequence | v1.1 | prompt + N slots → checklist you tick | suggested from items recalled |
-| 6 | `explain` Explain it | v1.2 | open question + textarea → AI feedback (covered ✓ / missing ○); model answer on request | AI-suggested |
-| 7 | `choice` Multiple choice | v1.2 | question + 4 options (keys **A–D**) → chosen option marked | automatic; options reshuffle |
-| 8 | `truefalse` True or false | v1.2 | statement + True `T` / False `F` → verdict + why | automatic |
-| 9 | `occlusion` Image occlusion | later | diagram with a masked label → revealed | manual; one card per mask |
+| Type | Front → back | Grading | Mockup |
+|---|---|---|---|
+| `question` Question | question → short answer | manual 1–4 | Type-QA |
+| `concept` Concept | term → meaning in one sentence; accepting it adds the reverse card (meaning → term) | manual 1–4; the two directions are never reviewed on the same day | Type-TwoWay |
+| `describe` Describe | open why/how question + textarea "Your description" (`⌘↵` to check · uses Claude) → your words, covered ✓ / missing ○, verdict pill; **Model answer `M`** on request | AI-suggested | Type-Explain |
 
-**Suggested grade:** shown as a `muted` pill ("2 of 3 · suggested grade: Hard") and preselected; **Enter** accepts, **1–4** always override. Heuristics: `typed` exact (case/whitespace-normalised) → Good, one typo in a word → Hard, any wrong digit or worse → Again; `list` all → Good, ≥ half → Hard, else Again (wrong order → Hard); `explain` → AI returns `{covered[], missing[], suggestedGrade}`.
+The AI makes all three at import; Describe sparingly (1–3 per source) and only when "Describe in your own words" is ticked. Each Describe check is one AI call. "Show answer without checking" skips the AI and grades manually.
+
+**Suggested grade (Describe):** a `muted` pill ("Mostly there · suggested grade: Hard"); that grade button is highlighted, **Enter** accepts, **1–4** always override. The AI returns `{covered[], missing[], suggested_grade}`. Verdicts: Again "Not yet", Hard "Mostly there", Good "Got the main point", Easy "All there".
 
 ## 8. Keyboard map
 
@@ -187,7 +183,7 @@ All types share the review shell; previews show front and back at ~80% scale (qu
 |---|---|
 | Global | `⌘N` new source · `⌘K` command palette · `⌘,` settings · `⌘1/2/3` Today / Inbox / Library |
 | Today | `Space` start review |
-| Review | `Space` show answer · `1 2 3 4` grade · `Enter` accept suggested grade · `Z` undo · `E` edit · `X` explain · `C` show context · `S` suspend · `Esc` end |
+| Review | `Space` show answer · `⌘↵` check a description · `1 2 3 4` grade · `Enter` accept suggested grade · `M` model answer · `Z` undo · `E` edit · `X` explain · `C` show context · `S` suspend · `Esc` end |
 | Card inputs | `A–D` choose · `T / F` true/false · `Tab` skip typing and reveal · `⌘↵` submit an explanation |
 | Inbox | `J / K` move · `A` accept · `E` edit · `R` rewrite · `D` delete · `⇧A` accept all · duplicates: `S` skip · `M` add source · `K` keep both |
 | Tidy up | `M` merge · `E` edit merged card · `N` not duplicates · `J / K` next / previous group |
@@ -218,7 +214,7 @@ Sentence case. No exclamation marks, no "Oops". Short and specific ("Cards land 
 
 ## 11. Not designed yet — build from the tokens
 
-First run (welcome → AI provider and key → first source) · empty states (empty Inbox, empty Library, nothing due, Tidy up "All tidy.") · errors as inline `warn-soft` messages with Retry, never modal alerts · toasts (`Sonner`, bottom-centre: "Card deleted · Undo") · card edit dialog in Review · command palette · logo/app icon.
+First run (welcome → AI provider and key → first source) · empty states (empty Inbox: "Nothing to check." only, empty Library, nothing due, Tidy up "All tidy.") · errors as inline `warn-soft` messages with Retry, never modal alerts · toasts (`Sonner`, bottom-centre: "Card deleted · Undo") · card edit dialog in Review · command palette · logo/app icon.
 
 ## 12. Component mapping (shadcn-svelte)
 

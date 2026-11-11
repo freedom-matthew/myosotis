@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use myosotis_core::{
-    CardGenerator, CardId, DraftToStore, GeneratedCard, GenerationRequest, ImportId, ImportRepo,
-    NewImport, RepoError, find_duplicate, split_source,
+    CardGenerator, CardId, DraftToStore, GenerationRequest, ImportId, ImportRepo, NewImport,
+    RepoError, find_duplicate, split_source,
 };
 use tauri::State;
 use tauri::ipc::{InvokeBody, Request};
@@ -47,7 +47,6 @@ pub async fn generate(
                 let known: Vec<(CardId, String)> = repo.known_card_texts().await?;
                 let drafts: Vec<DraftToStore> = cards
                     .into_iter()
-                    .map(GeneratedCard::normalised)
                     .map(|card| {
                         let text: String = format!("{} {}", card.question, card.answer);
                         DraftToStore {

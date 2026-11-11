@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 
-export type CardKind = 'qa' | 'cloze' | 'reverse';
+export type CardKind = 'question' | 'concept' | 'describe';
 export type Grade = 'again' | 'hard' | 'good' | 'easy';
 export type Depth = 'essentials' | 'balanced' | 'thorough';
 export type ImportStatus = 'generating' | 'in_inbox' | 'failed' | 'done';
@@ -112,8 +112,10 @@ export type NewImport = {
 	text: string;
 	depth: Depth;
 	focus: string | null;
-	fill_in_blank: boolean;
+	describe: boolean;
 };
+
+export type Marking = { covered: string[]; missing: string[]; suggested_grade: Grade };
 
 export const todaySummary = (): Promise<TodaySummary> => invoke('today_summary');
 export const reviewSession = (): Promise<SessionCard[]> => invoke('review_session');
@@ -123,6 +125,8 @@ export const undoGrade = (card: number): Promise<void> => invoke('undo_grade', {
 export const editCard = (card: number, question: string, answer: string): Promise<void> =>
 	invoke('edit_card', { card, question, answer });
 export const explainCard = (card: number): Promise<string> => invoke('explain_card', { card });
+export const markDescription = (card: number, description: string): Promise<Marking> =>
+	invoke('mark_description', { card, description });
 export const libraryCards = (): Promise<LibraryCard[]> => invoke('library_cards');
 export const setSuspended = (card: number, suspended: boolean): Promise<void> =>
 	invoke('set_suspended', { card, suspended });

@@ -35,7 +35,7 @@ Everything in the mockups is on Tailwind's default spacing and type scales and o
 5. "Build New source and the Inbox, including streaming cards during generation and the source-text lifecycle."
 6. "Add the duplicate check at import and the Inbox duplicate state."
 7. "Build Library, then Tidy up, then Settings."
-8. "Add card types `cloze` and `reverse` (DESIGN.md §7). Then dark mode."
+8. "Add card types `concept` and `describe` (DESIGN.md §7). Then dark mode."
 
 After each step, ask Claude Code to screenshot the running app and compare it with the mockup.
 If you also use **Export → Handoff to Claude Code** from the Claude Design canvas, keep this folder anyway: it holds the decisions that aren't visible on the canvas (data model, duplicate rules, keys, grading).

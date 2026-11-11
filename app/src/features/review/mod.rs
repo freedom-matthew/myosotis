@@ -1,7 +1,8 @@
 use chrono::{DateTime, Utc};
 use myosotis_core::{
-    Card, CardExplainer, CardId, DueCard, ExplanationRequest, GenerateError, Grade, RepoError,
-    ReviewRepo, Schedule, SessionCard, plan_session, session_horizon,
+    Card, CardExplainer, CardId, CardMarker, DueCard, ExplanationRequest, GenerateError, Grade,
+    Marking, MarkingRequest, RepoError, ReviewRepo, Schedule, SessionCard, plan_session,
+    session_horizon,
 };
 use myosotis_core::{Settings, SettingsRepo};
 use tauri::State;
@@ -65,6 +66,26 @@ pub async fn explain(
     explainer.explain(&request).await
 }
 
+/// Has the AI mark what I wrote for a Describe card against its model answer.
+pub async fn describe(
+    repo: &impl ReviewRepo,
+    marker: &impl CardMarker,
+    card: CardId,
+    description: &str,
+) -> Result<Marking, GenerateError> {
+    let card: ExplanationRequest = repo
+        .explanation_request(card)
+        .await
+        .map_err(|error| GenerateError(error.to_string()))?;
+    let request: MarkingRequest = MarkingRequest {
+        question: card.question,
+        model_answer: card.answer,
+        excerpt: card.excerpt,
+        description: description.to_string(),
+    };
+    marker.mark(&request).await
+}
+
 #[tauri::command]
 pub async fn review_session(repo: State<'_, SqliteCardRepo>) -> Result<Vec<SessionCard>, String> {
     session(repo.inner(), Utc::now(), clock::start_of_local_day())
@@ -105,6 +126,17 @@ pub async fn edit_card(
 #[tauri::command]
 pub async fn explain_card(repo: State<'_, SqliteCardRepo>, card: CardId) -> Result<String, String> {
     explain(repo.inner(), &ClaudeCode, card)
+        .await
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn mark_description(
+    repo: State<'_, SqliteCardRepo>,
+    card: CardId,
+    description: String,
+) -> Result<Marking, String> {
+    describe(repo.inner(), &ClaudeCode, card, &description)
         .await
         .map_err(|error| error.to_string())
 }

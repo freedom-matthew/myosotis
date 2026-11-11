@@ -8,7 +8,7 @@ use tauri::State;
 
 use crate::storage::SqliteCardRepo;
 
-/// Finds groups of similar cards. The two directions of a reverse card always use the
+/// Finds groups of similar cards. The two directions of a concept card always use the
 /// same words, so they are never proposed.
 pub async fn groups(repo: &(impl LibraryRepo + TidyRepo)) -> Result<Vec<TidyGroup>, RepoError> {
     let cards: Vec<StoredCard> = repo.all_cards().await?;

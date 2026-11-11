@@ -35,7 +35,7 @@
   --primary-hover: #36649f;
   --primary-strong: #2c5590; /* link hover, badge text on primary-tint */
   --primary-soft: #eef3fa;   /* selected row / chosen option / merged-card suggestion */
-  --primary-tint: #dce6f4;   /* badges, revealed cloze, "keeps history" pill */
+  --primary-tint: #dce6f4;   /* badges, "keeps history" pill */
   --secondary: #fbfaf7;      /* grade buttons, secondary buttons, excerpt boxes */
   --secondary-foreground: #1d1e22;
   --muted: #f4f1ea;          /* explanation box, status pills */
