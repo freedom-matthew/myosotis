@@ -3,7 +3,7 @@ mod common;
 use common::*;
 use myosotis_app::features::settings;
 use myosotis_app::storage::SqliteCardRepo;
-use myosotis_core::{SessionCard, Settings, Theme};
+use myosotis_core::{SessionCard, Settings, Size, Theme};
 
 #[tokio::test]
 async fn a_fresh_app_uses_twenty_new_cards_and_ninety_percent_retention() {
@@ -86,4 +86,21 @@ async fn settings_are_remembered() {
 
     // then the theme is still dark
     assert_eq!(current.theme, Theme::Dark);
+}
+
+#[tokio::test]
+async fn the_app_is_drawn_at_its_usual_size_until_i_choose_a_larger_one() {
+    // given a new installation
+    let repo: SqliteCardRepo = empty_collection().await;
+    assert_eq!(settings::load(&repo).await.unwrap().size, Size::Default);
+
+    // when I choose the largest size
+    let largest: Settings = Settings {
+        size: Size::Largest,
+        ..Settings::default()
+    };
+    settings::update(&repo, largest).await.unwrap();
+
+    // then it is remembered for the next start
+    assert_eq!(settings::load(&repo).await.unwrap().size, Size::Largest);
 }

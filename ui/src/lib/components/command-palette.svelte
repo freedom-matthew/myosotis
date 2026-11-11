@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { libraryCards, type LibraryCard } from '#lib/api.js';
+	import { addCardDialog } from '#lib/add-card.svelte.js';
 	import * as Command from '#lib/components/ui/command/index.js';
 
 	type Action = { label: string; route: string };
@@ -26,6 +27,11 @@
 		open = false;
 		goto(route);
 	}
+
+	function addCard(): void {
+		open = false;
+		addCardDialog.open = true;
+	}
 </script>
 
 <Command.Dialog bind:open class="max-w-140 shadow-popover">
@@ -36,6 +42,7 @@
 			{#each ACTIONS as action (action.route)}
 				<Command.Item onSelect={() => go(action.route)}>{action.label}</Command.Item>
 			{/each}
+			<Command.Item onSelect={addCard}>Add card</Command.Item>
 		</Command.Group>
 		{#if cards.length > 0}
 			<Command.Group heading="Cards">

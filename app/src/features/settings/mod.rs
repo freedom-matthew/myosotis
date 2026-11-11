@@ -1,5 +1,5 @@
-use myosotis_core::{RepoError, Settings, SettingsRepo};
-use tauri::State;
+use myosotis_core::{RepoError, Settings, SettingsRepo, Size};
+use tauri::{AppHandle, Manager, State, WebviewWindow};
 
 use crate::claude_code::{self, ClaudeStatus};
 use crate::storage::SqliteCardRepo;
@@ -14,6 +14,16 @@ pub async fn update(repo: &impl SettingsRepo, settings: Settings) -> Result<Sett
     Ok(validated)
 }
 
+/// Draws the whole window at the chosen size.
+pub fn apply_size(app: &AppHandle, size: Size) {
+    let window: Option<WebviewWindow> = app.get_webview_window("main");
+    if let Some(window) = window
+        && let Err(error) = window.set_zoom(size.zoom())
+    {
+        eprintln!("could not change the size: {error}");
+    }
+}
+
 #[tauri::command]
 pub async fn get_settings(repo: State<'_, SqliteCardRepo>) -> Result<Settings, String> {
     load(repo.inner()).await.map_err(|error| error.to_string())
@@ -21,12 +31,15 @@ pub async fn get_settings(repo: State<'_, SqliteCardRepo>) -> Result<Settings, S
 
 #[tauri::command]
 pub async fn update_settings(
+    app: AppHandle,
     repo: State<'_, SqliteCardRepo>,
     settings: Settings,
 ) -> Result<Settings, String> {
-    update(repo.inner(), settings)
+    let saved: Settings = update(repo.inner(), settings)
         .await
-        .map_err(|error| error.to_string())
+        .map_err(|error| error.to_string())?;
+    apply_size(&app, saved.size);
+    Ok(saved)
 }
 
 #[tauri::command]

@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { Inbox, Library, Plus, Search, SlidersHorizontal, Sun } from '@lucide/svelte';
 	import { inbox, type InboxImport } from '#lib/api.js';
+	import AddCardDialog from '#lib/components/add-card-dialog.svelte';
 	import CommandPalette from '#lib/components/command-palette.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { cn } from '#lib/utils.js';
@@ -106,3 +107,4 @@
 </div>
 
 <CommandPalette bind:open={paletteOpen} />
+<AddCardDialog />

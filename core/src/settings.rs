@@ -33,11 +33,49 @@ impl Theme {
     }
 }
 
+/// How large the whole app is drawn, for big screens.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Size {
+    #[default]
+    Default,
+    Larger,
+    Largest,
+}
+
+impl Size {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Size::Default => "default",
+            Size::Larger => "larger",
+            Size::Largest => "largest",
+        }
+    }
+
+    pub fn parse(value: &str) -> Self {
+        match value {
+            "larger" => Size::Larger,
+            "largest" => Size::Largest,
+            _ => Size::Default,
+        }
+    }
+
+    /// How much the window zooms everything: text, spacing and the sidebar alike.
+    pub fn zoom(self) -> f64 {
+        match self {
+            Size::Default => 1.0,
+            Size::Larger => 1.15,
+            Size::Largest => 1.3,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     pub new_cards_per_day: u32,
     pub desired_retention_percent: u32,
     pub theme: Theme,
+    pub size: Size,
 }
 
 impl Default for Settings {
@@ -46,6 +84,7 @@ impl Default for Settings {
             new_cards_per_day: 20,
             desired_retention_percent: 90,
             theme: Theme::System,
+            size: Size::Default,
         }
     }
 }

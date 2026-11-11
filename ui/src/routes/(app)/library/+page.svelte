@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { Plus } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import {
 		deleteCard,
@@ -10,7 +11,9 @@
 		type LibraryCard,
 		type TidyGroup
 	} from '#lib/api.js';
+	import { addCardDialog } from '#lib/add-card.svelte.js';
 	import Notice from '#lib/components/notice.svelte';
+	import { Kbd } from '#lib/components/ui/kbd/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -148,9 +151,16 @@
 		tidyGroups().then((groups: TidyGroup[]) => (tidyCount = groups.length));
 	});
 
+	$effect(() => {
+		if (addCardDialog.added > 0) load();
+	});
+
 	function onkeydown(event: KeyboardEvent): void {
-		if (isTyping(event) || confirmingDelete) return;
-		if (event.key === '/') {
+		if (isTyping(event) || confirmingDelete || addCardDialog.open) return;
+		if (event.key === 'n' && !event.metaKey && !event.ctrlKey) {
+			event.preventDefault();
+			addCardDialog.open = true;
+		} else if (event.key === '/') {
 			event.preventDefault();
 			searchInput?.focus();
 		} else if (event.key === 'ArrowDown') {
@@ -177,14 +187,20 @@
 				{cards.length === 1 ? 'card' : 'cards'}
 			</span>
 		</div>
-		<Button href="/tidy" variant="secondary" class="gap-2 border-input">
-			Tidy up
-			{#if tidyCount > 0}
-				<span class="rounded-full bg-primary-tint px-2 font-mono text-xs text-primary-strong">
-					{tidyCount}
-				</span>
-			{/if}
-		</Button>
+		<div class="flex gap-2">
+			<Button href="/tidy" variant="secondary" class="gap-2 border-input">
+				Tidy up
+				{#if tidyCount > 0}
+					<span class="rounded-full bg-primary-tint px-2 font-mono text-xs text-primary-strong">
+						{tidyCount}
+					</span>
+				{/if}
+			</Button>
+			<Button onclick={() => (addCardDialog.open = true)} class="gap-2">
+				<Plus size={15} />Add card
+				<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">N</Kbd>
+			</Button>
+		</div>
 	</header>
 
 	{#if error}
@@ -233,7 +249,7 @@
 								{card.question}
 							</Table.Cell>
 							<Table.Cell class="max-w-32 truncate text-xs text-muted-foreground">
-								{card.source_title ?? '—'}
+								{card.source_title ?? 'By hand'}
 							</Table.Cell>
 							<Table.Cell>
 								{#if card.recall_percent !== null}
@@ -287,7 +303,7 @@
 				{/if}
 				<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
 					<dt class="text-muted-foreground">From</dt>
-					<dd>{selected.source_title ?? '—'}</dd>
+					<dd>{selected.source_title ?? 'By hand'}</dd>
 					<dt class="text-muted-foreground">Reviews</dt>
 					<dd class="font-mono">{selected.review_count}</dd>
 					<dt class="text-muted-foreground">Next review</dt>

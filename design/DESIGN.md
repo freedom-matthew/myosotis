@@ -148,7 +148,7 @@ Title + helper text; segmented **Paste text | Open file**. Left: Title input, Te
 - `J/K` move focus; key-hint footer.
 
 ### Library — `screens/Library.dc.html`
-- Title, "1,284 cards", **Tidy up** button with a count badge.
+- Title, "1,284 cards", **Tidy up** button with a count badge, **Add card `N`** (primary; also in `⌘K`). Add card is a dialog: Question | Concept | Describe switch with a one-line hint, two serif fields whose labels follow the type (Question/Answer, Term/Meaning, Question/Model answer), **Add card `⌘↵`** + **Done**; it stays open for the next card. Cards added by hand show "By hand" as their origin.
 - Search (`/`, searches questions, answers and origins) + filter chips: All, Due today, New, Low recall, Suspended.
 - Table: Question · **From** · Recall now (bar + %, FSRS retrievability) · Next. Selected row: `primary-soft` + 3px inset `primary` bar.
 - Detail panel: Question, Answer (serif textareas), **Context** (excerpt box), meta (From — all origins, Reviews, Next review), Suspend, Delete.
@@ -160,8 +160,8 @@ Breadcrumb "Library" → title → "4 groups of similar cards found among 1,284.
 Single 720px column of white sections; rows = label (+ helper) left, control right.
 - **AI provider:** Provider, Model, API key (password, Test, "Connected"; stored in the system keychain, never in the DB).
 - **Reviewing:** New cards per day, Desired retention (80–97%, default 90), Grade buttons (Four | Two).
-- **Appearance:** Theme (Light | Dark | System), Card font (Serif | Sans), Reduce motion.
-- **Data:** **Source text** (Delete when the Inbox is done — default | Keep the full text), **Check new cards for duplicates** (on), Collection folder, Backup and export.
+- **Appearance:** Theme (Light | Dark | System), **Size** (Default | Larger | Largest: the whole window zooms 100 / 115 / 130%, for big screens; `⌘+ ⌘− ⌘0` anywhere), Card font (Serif | Sans), Reduce motion.
+- **Data:** **Source text** (Delete when the Inbox is done — default | Keep the full text), **Check new cards for duplicates** (on), Collection folder, Backup and export, **Restore…** (dialog listing backups newest first with date, time and card count → confirm "Restore the backup from …?" · **Restore and restart**; the current collection is backed up first).
 
 ## 7. Card types — `mockups/card-types/`
 
@@ -181,13 +181,13 @@ The AI makes all three at import; Describe sparingly (1–3 per source) and only
 
 | Context | Keys |
 |---|---|
-| Global | `⌘N` new source · `⌘K` command palette · `⌘,` settings · `⌘1/2/3` Today / Inbox / Library |
+| Global | `⌘N` new source · `⌘K` command palette · `⌘,` settings · `⌘1/2/3` Today / Inbox / Library · `⌘+ ⌘− ⌘0` size |
 | Today | `Space` start review |
 | Review | `Space` show answer · `⌘↵` check a description · `1 2 3 4` grade · `Enter` accept suggested grade · `M` model answer · `Z` undo · `E` edit · `X` explain · `C` show context · `S` suspend · `Esc` end |
 | Card inputs | `A–D` choose · `T / F` true/false · `Tab` skip typing and reveal · `⌘↵` submit an explanation |
 | Inbox | `J / K` move · `A` accept · `E` edit · `R` rewrite · `D` delete · `⇧A` accept all · duplicates: `S` skip · `M` add source · `K` keep both |
 | Tidy up | `M` merge · `E` edit merged card · `N` not duplicates · `J / K` next / previous group |
-| Library | `/` search · `↑ ↓` move · `Enter` edit |
+| Library | `/` search · `↑ ↓` move · `Enter` edit · `N` add card |
 | New source | `⌘↵` generate |
 
 `⌘` on macOS, `Ctrl` elsewhere. Single-letter keys are inactive while a text field has focus.

@@ -9,7 +9,7 @@ use chrono::Utc;
 use tauri::Manager;
 
 use crate::features::{
-    backup, import_source, inbox, library, list_cards, review, settings, tidy, today,
+    add_card, backup, import_source, inbox, library, list_cards, review, settings, tidy, today,
 };
 use crate::storage::SqliteCardRepo;
 
@@ -19,9 +19,10 @@ pub fn run() {
         .setup(|app| {
             let data_dir: PathBuf = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
-            let repo: SqliteCardRepo = tauri::async_runtime::block_on(SqliteCardRepo::open(
-                &data_dir.join("myosotis.db"),
-            ))?;
+            let database: PathBuf = data_dir.join("myosotis.db");
+            backup::apply_staged_restore(&data_dir, &database)?;
+            let repo: SqliteCardRepo =
+                tauri::async_runtime::block_on(SqliteCardRepo::open(&database))?;
             let folder: PathBuf = backup::folder(app.handle())?;
             if let Err(error) = tauri::async_runtime::block_on(backup::daily_backup(
                 &repo,
@@ -30,11 +31,16 @@ pub fn run() {
             )) {
                 eprintln!("daily backup failed: {error}");
             }
+            match tauri::async_runtime::block_on(settings::load(&repo)) {
+                Ok(saved) => settings::apply_size(app.handle(), saved.size),
+                Err(error) => eprintln!("could not load settings: {error}"),
+            }
             app.manage(repo);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             list_cards::list_cards,
+            add_card::add_card,
             today::today_summary,
             review::review_session,
             review::grade_card,
@@ -48,6 +54,8 @@ pub fn run() {
             backup::back_up_now,
             backup::export_cards,
             backup::data_folder,
+            backup::list_backups,
+            backup::restore_backup,
             library::library_cards,
             library::set_suspended,
             library::delete_card,

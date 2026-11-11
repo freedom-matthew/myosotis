@@ -6,8 +6,8 @@ use chrono::{DateTime, SecondsFormat, Utc};
 use myosotis_core::{
     Card, CardId, CardKind, CardRepo, Depth, DraftCard, DraftToStore, DueCard, ExistingCard,
     ExplanationRequest, GeneratedCard, GenerationRequest, Grade, ImportId, ImportRepo,
-    ImportStatus, InboxImport, LibraryRepo, NewImport, Phase, RecentImport, RepoError, ReviewRepo,
-    Schedule, Settings, SettingsRepo, StoredCard, Theme, TidyRepo,
+    ImportStatus, InboxImport, LibraryRepo, NewCard, NewImport, Phase, RecentImport, RepoError,
+    ReviewRepo, Schedule, Settings, SettingsRepo, Size, StoredCard, Theme, TidyRepo,
 };
 use sqlx::SqlitePool;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteTransaction};
@@ -30,6 +30,22 @@ impl SqliteCardRepo {
         let repo: Self = Self::migrated(pool).await?;
         repo.fail_interrupted_imports().await?;
         Ok(repo)
+    }
+
+    /// How many cards a backup holds, read without changing the file. `None` when the
+    /// file can't be read as a collection.
+    pub async fn count_cards_in(path: &Path) -> Option<i64> {
+        let options: SqliteConnectOptions =
+            SqliteConnectOptions::new().filename(path).read_only(true);
+        let pool: SqlitePool = SqlitePool::connect_with(options).await.ok()?;
+        // Not checked at compile time: a backup can be older than the current schema.
+        let count: Option<i64> =
+            sqlx::query_scalar("SELECT count(*) FROM card WHERE status <> 'draft'")
+                .fetch_one(&pool)
+                .await
+                .ok();
+        pool.close().await;
+        count
     }
 
     /// Fresh, empty database that lives only as long as the repo. Meant for tests.
@@ -115,6 +131,28 @@ impl CardRepo for SqliteCardRepo {
         .fetch_all(&self.pool)
         .await
         .map_err(repo_error)
+    }
+
+    async fn add(&self, card: &NewCard, schedule: &Schedule) -> Result<CardId, RepoError> {
+        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
+        let kind: &str = card.kind.as_str();
+        let created_at: String = to_db(schedule.last_review);
+        let id: CardId = sqlx::query_scalar!(
+            r#"INSERT INTO card (kind, question, answer, status, created_at)
+               VALUES (?, ?, ?, 'active', ?)
+               RETURNING id AS "id!""#,
+            kind,
+            card.question,
+            card.answer,
+            created_at
+        )
+        .fetch_one(&mut *transaction)
+        .await
+        .map_err(repo_error)?;
+        save_schedule(&mut transaction, id, schedule).await?;
+        add_other_direction(&mut transaction, id).await?;
+        transaction.commit().await.map_err(repo_error)?;
+        Ok(id)
     }
 }
 
@@ -409,6 +447,7 @@ impl SettingsRepo for SqliteCardRepo {
                         .unwrap_or(settings.desired_retention_percent);
                 }
                 "theme" => settings.theme = Theme::parse(&row.value),
+                "size" => settings.size = Size::parse(&row.value),
                 _ => {}
             }
         }
@@ -416,13 +455,14 @@ impl SettingsRepo for SqliteCardRepo {
     }
 
     async fn save_settings(&self, settings: &Settings) -> Result<(), RepoError> {
-        let values: [(&str, String); 3] = [
+        let values: [(&str, String); 4] = [
             ("new_cards_per_day", settings.new_cards_per_day.to_string()),
             (
                 "desired_retention_percent",
                 settings.desired_retention_percent.to_string(),
             ),
             ("theme", settings.theme.as_str().to_string()),
+            ("size", settings.size.as_str().to_string()),
         ];
         let mut transaction: SqliteTransaction<'static> = self.begin().await?;
         for (key, value) in values {

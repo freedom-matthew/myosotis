@@ -3,6 +3,8 @@ use std::future::Future;
 
 use serde::{Deserialize, Serialize};
 
+use crate::review::Schedule;
+
 pub type CardId = i64;
 
 /// How a card is reviewed.
@@ -51,9 +53,48 @@ impl Card {
     }
 }
 
+/// A card I write myself rather than import.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct NewCard {
+    pub kind: CardKind,
+    pub question: String,
+    pub answer: String,
+}
+
+impl NewCard {
+    /// Without surrounding whitespace; refused when the question or answer is blank.
+    pub fn tidied(&self) -> Result<NewCard, AddCardError> {
+        let question: &str = self.question.trim();
+        let answer: &str = self.answer.trim();
+        if question.is_empty() || answer.is_empty() {
+            return Err(AddCardError::Blank);
+        }
+        Ok(NewCard {
+            kind: self.kind,
+            question: question.to_string(),
+            answer: answer.to_string(),
+        })
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum AddCardError {
+    #[error("A card needs both a question and an answer.")]
+    Blank,
+    #[error(transparent)]
+    Repo(#[from] RepoError),
+}
+
 /// Port for card storage. Adapters (e.g. SQLite) implement it outside core.
 pub trait CardRepo {
     fn list(&self) -> impl Future<Output = Result<Vec<Card>, RepoError>> + Send;
+
+    /// Stores an active card, ready for review; a concept also gets its other direction.
+    fn add(
+        &self,
+        card: &NewCard,
+        schedule: &Schedule,
+    ) -> impl Future<Output = Result<CardId, RepoError>> + Send;
 }
 
 /// Storage failed. Wraps the adapter's own error so core stays I/O-agnostic.

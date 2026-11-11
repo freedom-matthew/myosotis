@@ -83,11 +83,13 @@ export type LibraryCard = {
 };
 
 export type Theme = 'system' | 'light' | 'dark';
+export type Size = 'default' | 'larger' | 'largest';
 
 export type Settings = {
 	new_cards_per_day: number;
 	desired_retention_percent: number;
 	theme: Theme;
+	size: Size;
 };
 
 export type ClaudeStatus = { installed: boolean; logged_in: boolean; plan: string | null };
@@ -116,6 +118,10 @@ export type NewImport = {
 };
 
 export type Marking = { covered: string[]; missing: string[]; suggested_grade: Grade };
+
+export type NewCard = { kind: CardKind; question: string; answer: string };
+
+export type Backup = { name: string; taken_at: string; card_count: number | null };
 
 export const todaySummary = (): Promise<TodaySummary> => invoke('today_summary');
 export const reviewSession = (): Promise<SessionCard[]> => invoke('review_session');
@@ -168,3 +174,6 @@ export const acceptAllDrafts = (id: number): Promise<void> =>
 export const editDraft = (card: number, question: string, answer: string): Promise<void> =>
 	invoke('edit_draft', { card, question, answer });
 export const deleteDraft = (card: number): Promise<void> => invoke('delete_draft', { card });
+export const addCard = (card: NewCard): Promise<number> => invoke('add_card', { card });
+export const listBackups = (): Promise<Backup[]> => invoke('list_backups');
+export const restoreBackup = (name: string): Promise<void> => invoke('restore_backup', { name });

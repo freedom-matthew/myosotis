@@ -1,3 +1,4 @@
+pub mod add_card;
 pub mod backup;
 pub mod import_source;
 pub mod inbox;
