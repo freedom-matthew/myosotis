@@ -127,7 +127,7 @@ Import    id, title, full_text, status (generating|in_inbox|done), created_at
 ## 6. Screens
 
 ### Today — `screens/Today.dc.html`
-Date eyebrow → headline `text-5xl` "37 cards are due today." → "About 9 minutes · 28 reviews and 9 new" → **Start review** (primary, `Space`) + link "Only reviews, skip new". When nothing is due and the collection is empty, just a line of text; no New source button (the sidebar has it). Tiles (auto-fit, min 200px): **Inbox**, **Next 7 days** (bars, today in `chart-1`), **Retention, 30 days**, **Keeps slipping** (focused session with Rewrite / Explain). **Recent imports** list (title, status such as "12 in Inbox" or "22 cards", relative date).
+Date eyebrow → headline `text-5xl` "37 cards are due today." → "About 9 minutes · 28 reviews and 9 new" → **Start review** (primary, `Space`) + link "Only reviews, skip new". When nothing is due and the collection is empty, just a line of text; no New source button (the sidebar has it). Three tiles, sharing the full width (the sidebar already counts the Inbox): **Next 7 days** (bars, today in `chart-1`), **Retention, 30 days**, **Keeps slipping** (focused session with Rewrite / Explain). **Recent imports** list (title, status such as "12 in Inbox" or "22 cards", relative date).
 States: nothing due → "Nothing due today." + next due time. No API key → quiet banner linking to Settings.
 
 ### Review — `screens/Review.dc.html` (the core loop)

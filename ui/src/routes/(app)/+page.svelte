@@ -121,16 +121,7 @@
 			{/if}
 		</section>
 
-		<section class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-			<a
-				href="/inbox"
-				class="flex flex-col gap-2 rounded-2xl border bg-card p-5 transition-colors hover:border-input"
-			>
-				<span class="text-xs text-muted-foreground">Inbox</span>
-				<span class="text-2xl font-medium">
-					{summary.inbox_count > 0 ? `${summary.inbox_count} to check` : 'All checked'}
-				</span>
-			</a>
+		<section class="grid grid-cols-3 gap-3.5">
 			<div class="flex flex-col gap-2 rounded-2xl border bg-card p-5">
 				<span class="text-xs text-muted-foreground">Next 7 days</span>
 				<div
