@@ -926,30 +926,6 @@ impl ImportRepo for SqliteCardRepo {
         Ok(())
     }
 
-    async fn add_source_to_existing(&self, card: CardId) -> Result<ImportId, RepoError> {
-        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
-        let import: ImportId =
-            sqlx::query_scalar!("SELECT import_id FROM origin WHERE card_id = ?", card)
-                .fetch_one(&mut *transaction)
-                .await
-                .map_err(repo_error)?;
-        sqlx::query!(
-            "UPDATE origin SET card_id = (SELECT duplicate_of FROM card WHERE id = ?)
-             WHERE card_id = ?",
-            card,
-            card
-        )
-        .execute(&mut *transaction)
-        .await
-        .map_err(repo_error)?;
-        sqlx::query!("DELETE FROM card WHERE id = ? AND status = 'draft'", card)
-            .execute(&mut *transaction)
-            .await
-            .map_err(repo_error)?;
-        transaction.commit().await.map_err(repo_error)?;
-        Ok(import)
-    }
-
     async fn drafts_of(&self, import: ImportId) -> Result<Vec<CardId>, RepoError> {
         sqlx::query_scalar!(
             r#"SELECT c.id AS "id!" FROM card c

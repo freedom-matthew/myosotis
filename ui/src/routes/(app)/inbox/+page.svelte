@@ -11,7 +11,6 @@
 		editDraft,
 		inbox,
 		keepBothCards,
-		mergeSourceIntoExisting,
 		retryImport,
 		rewriteDraft,
 		stopImport,
@@ -141,7 +140,6 @@
 		else if (event.key === 'k' && !card.duplicate) focusedIndex = Math.max(focusedIndex - 1, 0);
 		else if (event.key === 'k') act(() => keepBothCards(card.id));
 		else if (event.key === 's' && card.duplicate) deleteCard(card);
-		else if (event.key === 'm' && card.duplicate) act(() => mergeSourceIntoExisting(card.id));
 		else if (event.key === 'a' && !card.duplicate) act(() => acceptDraft(card.id));
 		else if (event.key === 'A' && current) {
 			const id: number = current.id;
@@ -237,7 +235,7 @@
 								</span>
 								<div class="grid grid-cols-2 gap-3">
 									<div class="flex flex-col gap-1">
-										<span class="text-xs text-muted-foreground">New · from this source</span>
+										<span class="text-xs text-muted-foreground">New</span>
 										<p class="font-serif text-base">
 											{draft.question}
 										</p>
@@ -245,8 +243,8 @@
 									</div>
 									<div class="flex flex-col gap-1">
 										<span class="text-xs text-muted-foreground">
-											Existing · {draft.duplicate.source_title ?? 'added by hand'} ·
-											{draft.duplicate.review_count} reviews
+											Already in your collection · {draft.duplicate.review_count}
+											{draft.duplicate.review_count === 1 ? 'review' : 'reviews'}
 										</span>
 										<p class="font-serif text-base">{draft.duplicate.question}</p>
 										<p class="text-sm text-card-answer">{draft.duplicate.answer}</p>
@@ -256,13 +254,6 @@
 									<Button onclick={() => deleteCard(draft)} class="gap-2">
 										Skip
 										<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">S</Kbd>
-									</Button>
-									<Button
-										variant="ghost"
-										onclick={() => act(() => mergeSourceIntoExisting(draft.id))}
-										class="gap-2"
-									>
-										Add source to existing <Kbd class="font-mono">M</Kbd>
 									</Button>
 									<Button
 										variant="ghost"
@@ -341,8 +332,7 @@
 			{#if duplicates > 0}
 				<span>
 					<Kbd class="font-mono">S</Kbd>
-					<Kbd class="font-mono">M</Kbd>
-					<Kbd class="font-mono">K</Kbd> duplicates: skip · add source · keep both
+					<Kbd class="font-mono">K</Kbd> duplicates: skip · keep both
 				</span>
 			{/if}
 		</footer>

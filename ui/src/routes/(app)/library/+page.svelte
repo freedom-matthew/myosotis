@@ -79,9 +79,7 @@
 
 	function matches(card: LibraryCard): boolean {
 		const wanted: string = search.trim().toLowerCase();
-		const haystack: string = [card.question, card.answer, card.source_title, card.excerpt]
-			.join(' ')
-			.toLowerCase();
+		const haystack: string = `${card.question} ${card.answer}`.toLowerCase();
 		return passesFilter(card) && haystack.includes(wanted);
 	}
 
@@ -211,7 +209,7 @@
 		<Input
 			bind:ref={searchInput}
 			bind:value={search}
-			placeholder="Search questions, answers and sources"
+			placeholder="Search questions and answers"
 			aria-label="Search"
 			class="h-9 max-w-80 bg-card"
 		/>
@@ -234,7 +232,6 @@
 				<Table.Header>
 					<Table.Row>
 						<Table.Head>Question</Table.Head>
-						<Table.Head>From</Table.Head>
 						<Table.Head class="w-28">Recall now</Table.Head>
 						<Table.Head class="w-20">Next</Table.Head>
 					</Table.Row>
@@ -245,11 +242,8 @@
 							onclick={() => select(card)}
 							class={cn(card.id === selectedId && 'bg-primary-soft hover:bg-primary-soft')}
 						>
-							<Table.Cell class="max-w-64 truncate font-serif text-base">
+							<Table.Cell class="max-w-md truncate font-serif text-base">
 								{card.question}
-							</Table.Cell>
-							<Table.Cell class="max-w-32 truncate text-xs text-muted-foreground">
-								{card.source_title ?? 'By hand'}
 							</Table.Cell>
 							<Table.Cell>
 								{#if card.recall_percent !== null}
@@ -293,17 +287,7 @@
 				{#if edited}
 					<Button onclick={save} class="self-start">Save</Button>
 				{/if}
-				{#if selected.excerpt}
-					<div class="flex flex-col gap-1.5">
-						<span class="text-sm font-medium">Context</span>
-						<p class="rounded-lg border bg-secondary p-3 font-serif text-base text-card-answer">
-							{selected.excerpt}
-						</p>
-					</div>
-				{/if}
 				<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
-					<dt class="text-muted-foreground">From</dt>
-					<dd>{selected.source_title ?? 'By hand'}</dd>
 					<dt class="text-muted-foreground">Reviews</dt>
 					<dd class="font-mono">{selected.review_count}</dd>
 					<dt class="text-muted-foreground">Next review</dt>

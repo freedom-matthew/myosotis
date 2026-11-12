@@ -3,7 +3,7 @@ mod common;
 use common::*;
 use myosotis_app::features::{inbox, library};
 use myosotis_app::storage::SqliteCardRepo;
-use myosotis_core::{Card, DraftCard, ExistingCard, Grade, LibraryCard, SessionCard};
+use myosotis_core::{Card, DraftCard, ExistingCard};
 
 async fn collection_knowing_habits() -> SqliteCardRepo {
     let repo: SqliteCardRepo = empty_collection().await;
@@ -43,30 +43,6 @@ async fn an_unrelated_card_is_not_flagged() {
 
     // then it is a normal new card
     assert_eq!(drafts_in_inbox(&repo).await[0].duplicate, None);
-}
-
-#[tokio::test]
-async fn adding_the_source_keeps_the_existing_card_and_its_reviews() {
-    // given a reviewed card and a duplicate of it in the Inbox
-    let repo: SqliteCardRepo = collection_knowing_habits().await;
-    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
-    grade(&repo, &session[0], Grade::Easy, monday()).await;
-    let generator: FakeGenerator =
-        FakeGenerator::producing(&["Which cue triggers a habit routine?"]);
-    import_source_with(&repo, &generator).await;
-    let drafts: Vec<DraftCard> = drafts_in_inbox(&repo).await;
-
-    // when I add the source to the existing card
-    inbox::add_source_to_existing(&repo, drafts[0].id)
-        .await
-        .unwrap();
-
-    // then there is still one card, with its review, and it now shows that source
-    let cards: Vec<LibraryCard> = library::list(&repo, monday()).await.unwrap();
-    assert_eq!(cards.len(), 1);
-    assert_eq!(cards[0].review_count, 1);
-    assert_eq!(cards[0].source_title.as_deref(), Some("Habit notes"));
-    assert!(the_inbox(&repo).await.is_empty());
 }
 
 #[tokio::test]

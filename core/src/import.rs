@@ -52,6 +52,32 @@ pub struct NewImport {
     pub describe: bool,
 }
 
+/// How many words of the text label an import that has no name.
+const LABEL_WORDS: usize = 6;
+
+impl NewImport {
+    /// What the Inbox calls this import while its cards are being checked: the given name
+    /// (a file's name), or else the text's first few words. Nobody has to name a source.
+    pub fn label(&self) -> String {
+        let name: &str = self.title.trim();
+        if !name.is_empty() {
+            return name.to_string();
+        }
+        let words: Vec<&str> = self.text.split_whitespace().collect();
+        let start: String = words
+            .iter()
+            .take(LABEL_WORDS)
+            .copied()
+            .collect::<Vec<&str>>()
+            .join(" ");
+        if words.len() > LABEL_WORDS {
+            format!("{start}…")
+        } else {
+            start
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ImportStatus {
@@ -259,12 +285,6 @@ pub trait ImportRepo {
 
     /// Treats a suspected duplicate as a normal card.
     fn clear_duplicate(&self, card: CardId) -> impl Future<Output = Result<(), RepoError>> + Send;
-
-    /// Moves a draft's source to the card it duplicates and removes the draft. Returns its import.
-    fn add_source_to_existing(
-        &self,
-        card: CardId,
-    ) -> impl Future<Output = Result<ImportId, RepoError>> + Send;
 
     fn inbox(&self) -> impl Future<Output = Result<Vec<InboxImport>, RepoError>> + Send;
 

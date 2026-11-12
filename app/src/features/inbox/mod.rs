@@ -51,11 +51,6 @@ pub async fn keep_both(repo: &impl ImportRepo, card: CardId) -> Result<(), RepoE
     repo.clear_duplicate(card).await
 }
 
-pub async fn add_source_to_existing(repo: &impl ImportRepo, card: CardId) -> Result<(), RepoError> {
-    let import: ImportId = repo.add_source_to_existing(card).await?;
-    repo.finish_import_if_empty(import).await
-}
-
 /// Asks the AI for a better version of a draft, from its original passage.
 pub async fn rewrite(
     repo: &impl ImportRepo,
@@ -129,16 +124,6 @@ pub async fn rewrite_draft(repo: State<'_, SqliteCardRepo>, card: CardId) -> Res
 #[tauri::command]
 pub async fn keep_both_cards(repo: State<'_, SqliteCardRepo>, card: CardId) -> Result<(), String> {
     keep_both(repo.inner(), card)
-        .await
-        .map_err(|error| error.to_string())
-}
-
-#[tauri::command]
-pub async fn merge_source_into_existing(
-    repo: State<'_, SqliteCardRepo>,
-    card: CardId,
-) -> Result<(), String> {
-    add_source_to_existing(repo.inner(), card)
         .await
         .map_err(|error| error.to_string())
 }

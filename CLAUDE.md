@@ -58,7 +58,7 @@ Svelte 5 with runes only (`$state`, `$derived`, `$effect`, `$props`). Never use 
 - Mockups are reference HTML: copy values and copy text, never markup. Build with shadcn-svelte + Tailwind tokens.
 - No custom CSS unless it's truly unavoidable: style with shadcn-svelte components and Tailwind classes. The only CSS file is the theme (`ui/src/app.css`); no `<style>` blocks or inline styles. If something seems unavoidable, tell me why first.
 - Only theme tokens and Tailwind's default scales (bg-background, text-muted-foreground, text-sm, p-5, rounded-card…). No raw hex, no arbitrary values like p-[13px].
-- Cards are the primary entity; source full text is temporary (DESIGN.md §5). Never delete or merge cards with review history without user confirmation.
+- Cards are the primary entity; sources are temporary and anonymous (DESIGN.md §5). I never name a source, and cards never show where they came from. Never delete or merge cards with review history without user confirmation.
 - Don't add UI that the spec doesn't describe; ask first.
 - Every interactive element needs a keyboard path and a visible focus ring.
 

@@ -65,7 +65,6 @@ pub fn run() {
             import_source::stop_import,
             inbox::rewrite_draft,
             inbox::keep_both_cards,
-            inbox::merge_source_into_existing,
             tidy::tidy_groups,
             tidy::merge_group,
             tidy::mark_not_duplicates,

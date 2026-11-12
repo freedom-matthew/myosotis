@@ -48,7 +48,7 @@
 			<Command.Group heading="Cards">
 				{#each cards as card (card.id)}
 					<Command.Item
-						value={`${card.id} ${card.question} ${card.answer} ${card.source_title ?? ''}`}
+						value={`${card.id} ${card.question} ${card.answer}`}
 						onSelect={() => go(`/library?card=${card.id}`)}
 					>
 						<span class="truncate">{card.question}</span>

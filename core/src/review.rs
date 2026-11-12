@@ -210,8 +210,6 @@ pub struct SessionCard {
     pub kind: CardKind,
     pub question: String,
     pub answer: String,
-    pub source_title: Option<String>,
-    pub excerpt: Option<String>,
     pub is_new: bool,
     pub grades: Vec<GradePreview>,
 }
@@ -271,8 +269,6 @@ fn to_session_card(due: DueCard, retention: f64, now: DateTime<Utc>) -> SessionC
         grades: due.schedule.previews(now, retention),
         question: due.card.question,
         answer: due.card.answer,
-        source_title: due.source_title,
-        excerpt: due.excerpt,
     }
 }
 

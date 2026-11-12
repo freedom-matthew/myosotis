@@ -15,7 +15,7 @@ Hex values map 1:1 to tokens (e.g. `#3E6FB0` = `primary`, `#66645F` = `muted-for
 
 ## 1. Principles
 
-1. **Cards are the product; sources are temporary.** A source exists only to produce cards. Once its cards are checked, the full text is deleted; each card keeps a short excerpt and the source name (§5).
+1. **Cards are the product; sources are temporary.** A source exists only to produce cards. Once its cards are checked, the full text is deleted. After distilling, where knowledge came from doesn't matter: sources are never named by the user and never shown on cards (§5).
 2. **Calm.** One primary action per screen. Blue only for the primary action, progress, focus and "your selection".
 3. **Keyboard-first.** Every action in Review, Inbox and Tidy up has a key, shown as a small mono key hint.
 4. **Serif for what you learn, sans for the tool.** Card content, excerpts, page titles: Newsreader. UI: Geist. Numbers (intervals, counts, keys): Geist Mono.
@@ -107,22 +107,22 @@ The **card** is the primary entity. A **source** is a temporary import job.
 ```
 Card      id, type, fields (per type), fsrs_state, created_at, suspended
 Origin    card_id, source_title, source_kind (text|md|pdf|docx), excerpt (1–3 sentences), imported_at
-          → a card can have several origins ("seen in 2 sources")
+          → internal only: grounds AI Explain and Rewrite; never shown
 Import    id, title, full_text, status (generating|in_inbox|done), created_at
           → full_text is deleted when status becomes done (default; Settings can keep it)
 ```
 
+- **Sources are never named.** An import is labelled automatically while it's in the Inbox: an opened file's name, or else the text's first few words.
 - **While a source is in the Inbox** its full text is kept: needed for passage highlighting and for "Rewrite" (AI regenerates a card from the original passage).
-- **When the Inbox for that import is finished** (all cards accepted / skipped / deleted), delete `full_text`. Each accepted card keeps its `Origin` with a short excerpt — tiny, but enough for "Show context" in review, grounded AI explanations, and duplicate decisions.
+- **When the Inbox for that import is finished** (all cards accepted / skipped / deleted), delete `full_text`. Each accepted card keeps its `Origin` with a short excerpt, invisible to the user: it only grounds AI Explain and Rewrite in what was read.
 - Only text inputs for now: paste, `.txt`, `.md`, `.pdf`, `.docx`.
 
 ### Duplicates
 
-1. **At import (main defence).** Each new card is compared with existing cards (embeddings, e.g. a local model or the provider's embeddings API; vectors stored in SQLite, e.g. `sqlite-vec`). Above a similarity threshold the card enters the Inbox as **possible duplicate** with three actions:
+1. **At import (main defence).** Each new card is compared with existing cards (embeddings, e.g. a local model or the provider's embeddings API; vectors stored in SQLite, e.g. `sqlite-vec`). Above a similarity threshold the card enters the Inbox as **possible duplicate** with two actions:
    - **Skip** (default, `S`) — drop the new card.
-   - **Add source to existing** (`M`) — keep the existing card and its review history; add the new `Origin`.
    - **Keep both** (`K`) — treat as a normal new card.
-2. **Tidy up (periodic).** On demand, AI clusters similar existing cards and proposes merges on the Tidy up screen. A merge keeps the **review history of the member with the most reviews**, uses the suggested (editable) wording, and keeps **all origins**. "Not duplicates" remembers the decision so the pair is not proposed again. Nothing changes without confirmation.
+2. **Tidy up (periodic).** On demand, AI clusters similar existing cards and proposes merges on the Tidy up screen. A merge keeps the **review history of the member with the most reviews**, uses the suggested (editable) wording. "Not duplicates" remembers the decision so the pair is not proposed again. Nothing changes without confirmation.
 
 ## 6. Screens
 
@@ -132,29 +132,29 @@ States: nothing due → "Nothing due today." + next due time. No API key → qui
 
 ### Review — `screens/Review.dc.html` (the core loop)
 - Top bar: End session (`Esc`) · counter "12 of 37" (mono) + 3px progress bar · Undo (`Z`).
-- Card: max-w 680px, `rounded-card`, `shadow-card`, `border-card-border`. Origin line (12px muted, file icon) → question `text-3xl` serif.
+- Card: max-w 680px, `rounded-card`, `shadow-card`, `border-card-border`. Type line (12px muted; only for Concept and Describe) → question `text-3xl` serif. No source name.
 - Before reveal: wide secondary **Show answer** (`Space`), max 360px.
-- After reveal (`animate-reveal`): divider → answer `text-xl` → ghost actions **Explain `X`** (inline `muted` box with AI explanation), **Edit card `E`**, **Show context `C`** (inline `secondary` box: "From ⟨source⟩" + excerpt in serif).
+- After reveal (`animate-reveal`): divider → answer `text-xl` → ghost actions **Explain `X`** (inline `muted` box with AI explanation), **Suspend `S`**, **Edit card `E`**.
 - Grade bar (`animate-grades`): 4 buttons, max 560px, `rounded-xl`; label + "key · interval" (mono); **Good** = `primary` + `shadow-primary`. Intervals from the FSRS preview.
 - Done state: "That is everything for now." + next due summary + **Back to Today**.
 
 ### New source — `screens/Import.dc.html`
-Title + helper text; segmented **Paste text | Open file**. Left: Title input, Text textarea (serif 16, word count) or dashed drop zone. Right panel: **How much to extract** (Essentials ~6 / Balanced ~14 / Thorough ~30), **Card types** (questions and concepts always; checkbox "Describe in your own words"), **Focus on** (optional), **Generate cards** (`⌘↵`) + "model · about N cards". Generating goes straight to the Inbox; cards stream in.
+Title + helper text; segmented **Paste text | Open file**. Left: Text textarea (serif 16, word count; label shows "· file name" after opening a file) or dashed drop zone. No title: nothing is named. Right panel: **How much to extract** (Essentials ~6 / Balanced ~14 / Thorough ~30), **Card types** (questions and concepts always; checkbox "Describe in your own words"), **Focus on** (optional), **Generate cards** (`⌘↵`) + "model · about N cards". Generating goes straight to the Inbox; cards stream in.
 
 ### Inbox — `screens/Curate.dc.html`
-- Header: source title, status line ("2 accepted · 3 to check · 1 possible duplicate · still generating…"), **Accept all remaining** (`⇧A`).
+- Header: the import's automatic label, status line ("2 accepted · 3 to check · 1 possible duplicate · still generating…"), **Accept all remaining** (`⇧A`).
 - Left: source text (serif) with the focused card's passage in `highlight`; label "Source · kept until this Inbox is done".
 - Right: card list — accepted (collapsed, blue check), pending (question + answer), focused (expanded, `primary` border + ring; **Accept `A`**, **Edit `E`**, **Rewrite `R`**, **Delete `D`**), **possible duplicate** (hook-coloured pill "Similar card already in your collection", new vs existing side by side with the existing card's origin and review count; **Skip `S`** primary, **Add source to existing `M`**, **Keep both `K`**), merged (collapsed: "Source added to ⟨existing question⟩"), skeleton while generating.
 - `J/K` move focus; key-hint footer.
 
 ### Library — `screens/Library.dc.html`
 - Title, "1,284 cards", **Tidy up** button with a count badge, **Add card `N`** (primary; also in `⌘K`). Add card is a dialog: Question | Concept | Describe switch with a one-line hint, two serif fields whose labels follow the type (Question/Answer, Term/Meaning, Question/Model answer), **Add card `⌘↵`** + **Done**; it stays open for the next card. Cards added by hand show "By hand" as their origin.
-- Search (`/`, searches questions, answers and origins) + filter chips: All, Due today, New, Low recall, Suspended.
-- Table: Question · **From** · Recall now (bar + %, FSRS retrievability) · Next. Selected row: `primary-soft` + 3px inset `primary` bar.
-- Detail panel: Question, Answer (serif textareas), **Context** (excerpt box), meta (From — all origins, Reviews, Next review), Suspend, Delete.
+- Search (`/`, searches questions and answers) + filter chips: All, Due today, New, Low recall, Suspended.
+- Table: Question · Recall now (bar + %, FSRS retrievability) · Next. Selected row: `primary-soft` + 3px inset `primary` bar.
+- Detail panel: Question, Answer (serif textareas), meta (Reviews, Next review), Suspend, Delete.
 
 ### Tidy up — `screens/Tidy.dc.html`
-Breadcrumb "Library" → title → "4 groups of similar cards found among 1,284. Nothing changes until you confirm." + **Check again**. One group open at a time: members side by side (question, answer, origin, review count; "Keeps its review history" pill on the member with most reviews) → **Suggested merged card** (`primary-soft` box; "Keeps every source: …") → **Merge `M`** (primary), **Edit merged card `E`**, **Not duplicates `N`**. Other groups are collapsed rows; done groups collapse to a check row.
+Breadcrumb "Library" → title → "4 groups of similar cards found among 1,284. Nothing changes until you confirm." + **Check again**. One group open at a time: members side by side (question, answer, review count; "Keeps its review history" pill on the member with most reviews) → **Suggested merged card** (`primary-soft` box) → **Merge `M`** (primary), **Edit merged card `E`**, **Not duplicates `N`**. Other groups are collapsed rows; done groups collapse to a check row.
 
 ### Settings — `screens/Settings.dc.html`
 Single 720px column of white sections; rows = label (+ helper) left, control right.
@@ -183,9 +183,9 @@ The AI makes all three at import; Describe sparingly (1–3 per source) and only
 |---|---|
 | Global | `⌘N` new source · `⌘K` command palette · `⌘,` settings · `⌘1/2/3` Today / Inbox / Library · `⌘+ ⌘− ⌘0` size |
 | Today | `Space` start review |
-| Review | `Space` show answer · `⌘↵` check a description · `1 2 3 4` grade · `Enter` accept suggested grade · `M` model answer · `Z` undo · `E` edit · `X` explain · `C` show context · `S` suspend · `Esc` end |
+| Review | `Space` show answer · `⌘↵` check a description · `1 2 3 4` grade · `Enter` accept suggested grade · `M` model answer · `Z` undo · `E` edit · `X` explain · `S` suspend · `Esc` end |
 | Card inputs | `A–D` choose · `T / F` true/false · `Tab` skip typing and reveal · `⌘↵` submit an explanation |
-| Inbox | `J / K` move · `A` accept · `E` edit · `R` rewrite · `D` delete · `⇧A` accept all · duplicates: `S` skip · `M` add source · `K` keep both |
+| Inbox | `J / K` move · `A` accept · `E` edit · `R` rewrite · `D` delete · `⇧A` accept all · duplicates: `S` skip · `K` keep both |
 | Tidy up | `M` merge · `E` edit merged card · `N` not duplicates · `J / K` next / previous group |
 | Library | `/` search · `↑ ↓` move · `Enter` edit · `N` add card |
 | New source | `⌘↵` generate |
@@ -220,4 +220,4 @@ First run (welcome → AI provider and key → first source) · empty states (em
 
 `Sidebar` · `Button` (default = primary, secondary, outline, ghost) · `Input` · `Textarea` · `Select` · `Checkbox` · `Slider` · `Switch` · `ToggleGroup` (segmented controls) · `Table` · `Badge` · `Command` + `Dialog` · `Tooltip` · `Separator` · `Sonner` · `Skeleton` · `Progress`.
 
-Custom: `Flashcard` (one body per card type), `GradeBar`, `Kbd`, `ForecastBars`, `SourceText` (passage highlighting), `RecallBar`, `ExcerptBox`, `DuplicateCompare`, `MergeGroup`, `Wordmark`.
+Custom: `Flashcard` (one body per card type), `GradeBar`, `Kbd`, `ForecastBars`, `SourceText` (passage highlighting), `RecallBar`, `DuplicateCompare`, `MergeGroup`, `Wordmark`.

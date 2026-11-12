@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
-	import { ArrowLeftRight, Check, Circle, FileText, PenLine, Undo2, X } from '@lucide/svelte';
+	import { ArrowLeftRight, Check, Circle, PenLine, Undo2, X } from '@lucide/svelte';
 	import {
 		editCard,
 		explainCard,
@@ -47,7 +47,6 @@
 	let reviewed: number = $state(0);
 	let loaded: boolean = $state(false);
 	let revealed: boolean = $state(false);
-	let showContext: boolean = $state(false);
 	let saving: boolean = $state(false);
 	let error: string | null = $state(null);
 	let gradedCards: number[] = $state([]);
@@ -79,7 +78,6 @@
 		queue = skipNew ? cards.filter((item) => !item.is_new) : cards;
 		if (queue.length === 0) loadNextDue();
 		revealed = false;
-		showContext = false;
 		explanation = null;
 		explaining = false;
 		description = '';
@@ -233,7 +231,6 @@
 				grade(marking.suggested_grade);
 			}
 			if (event.key === 'm' && marking) showModel = !showModel;
-			if (event.key === 'c' && card.excerpt) showContext = !showContext;
 			if (event.key === 'x') explain();
 			if (event.key === 's') suspend();
 			if (event.key === 'e') {
@@ -280,10 +277,8 @@
 			<article
 				class="flex w-full max-w-170 flex-col gap-6 rounded-card border border-card-border bg-card px-12 py-11 shadow-card"
 			>
-				{#if card.source_title || card.kind !== 'question'}
+				{#if card.kind !== 'question'}
 					<span class="flex items-center gap-2 text-xs text-muted-foreground">
-						{#if card.source_title}<FileText size={13} />{card.source_title}{/if}
-						{#if card.source_title && card.kind !== 'question'}<span>·</span>{/if}
 						{#if card.kind === 'concept'}
 							<ArrowLeftRight size={13} />Concept, both ways round
 						{:else if card.kind === 'describe'}
@@ -377,14 +372,6 @@
 								<p class="text-sm leading-normal text-card-answer">{explanation}</p>
 							</div>
 						{/if}
-						{#if showContext && card.excerpt}
-							<div class="flex animate-reveal flex-col gap-1.5 rounded-lg border bg-secondary px-4 py-3.5">
-								<span class="text-xs font-medium text-muted-foreground">
-									From {card.source_title}
-								</span>
-								<p class="font-serif text-base leading-normal text-card-answer">{card.excerpt}</p>
-							</div>
-						{/if}
 						<div class="-ml-2.5 flex gap-1">
 							{#if marking}
 								<Button
@@ -421,16 +408,6 @@
 							>
 								Edit card <span class="font-mono text-muted-foreground">E</span>
 							</Button>
-							{#if card.excerpt}
-								<Button
-									variant="ghost"
-									size="sm"
-									onclick={() => (showContext = !showContext)}
-									class="gap-1.5 text-xs text-foreground-secondary"
-								>
-									Show context <span class="font-mono text-muted-foreground">C</span>
-								</Button>
-							{/if}
 						</div>
 					</div>
 				{/if}

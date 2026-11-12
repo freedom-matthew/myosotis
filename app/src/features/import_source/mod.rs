@@ -18,7 +18,11 @@ pub async fn create(
     source: &NewImport,
     now: DateTime<Utc>,
 ) -> Result<ImportId, RepoError> {
-    repo.create_import(source, now).await
+    let labelled: NewImport = NewImport {
+        title: source.label(),
+        ..source.clone()
+    };
+    repo.create_import(&labelled, now).await
 }
 
 /// Runs the AI over a stored source, part by part. Each part's cards are saved as soon

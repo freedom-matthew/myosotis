@@ -12,8 +12,6 @@ export type SessionCard = {
 	kind: CardKind;
 	question: string;
 	answer: string;
-	source_title: string | null;
-	excerpt: string | null;
 	is_new: boolean;
 	grades: GradePreview[];
 };
@@ -160,8 +158,6 @@ export const markNotDuplicates = (cards: number[]): Promise<void> =>
 export const stopImport = (id: number): Promise<void> => invoke('stop_import', { import: id });
 export const rewriteDraft = (card: number): Promise<void> => invoke('rewrite_draft', { card });
 export const keepBothCards = (card: number): Promise<void> => invoke('keep_both_cards', { card });
-export const mergeSourceIntoExisting = (card: number): Promise<void> =>
-	invoke('merge_source_into_existing', { card });
 export const startImport = (source: NewImport): Promise<number> =>
 	invoke('start_import', { source });
 export const retryImport = (id: number): Promise<void> => invoke('retry_import', { import: id });

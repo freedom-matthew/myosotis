@@ -23,7 +23,8 @@
 		{ value: 'thorough', label: 'Thorough', cards: 30 }
 	];
 
-	let title: string = $state('');
+	/** The opened file's name, which labels the import in the Inbox; pasted text needs none. */
+	let fileName: string | null = $state<string | null>(null);
 	let text: string = $state('');
 	let focus: string = $state('');
 	let depth: Depth = $state('balanced');
@@ -35,10 +36,14 @@
 	let describe: boolean = $state(true);
 
 	const words: number = $derived(text.trim() === '' ? 0 : text.trim().split(/\s+/).length);
-	const canGenerate: boolean = $derived(title.trim() !== '' && text.trim() !== '' && !starting);
+	const canGenerate: boolean = $derived(text.trim() !== '' && !starting);
 	const expected: number = $derived(
 		DEPTHS.find((option) => option.value === depth)?.cards ?? 14
 	);
+
+	$effect(() => {
+		if (text.trim() === '') fileName = null;
+	});
 
 	/** Loads a file into the form, so the text can be checked before generating. */
 	async function openFile(file: File): Promise<void> {
@@ -46,7 +51,7 @@
 		reading = true;
 		try {
 			text = await readSourceFile(file);
-			if (title.trim() === '') title = file.name.replace(FILE_EXTENSION, '');
+			fileName = file.name.replace(FILE_EXTENSION, '');
 			mode = 'paste';
 		} catch (reason) {
 			error = String(reason);
@@ -78,7 +83,7 @@
 		starting = true;
 		try {
 			await startImport({
-				title: title.trim(),
+				title: fileName ?? '',
 				text,
 				depth,
 				focus: focus.trim() === '' ? null : focus.trim(),
@@ -127,14 +132,15 @@
 
 	<div class="grid grid-cols-[1fr_18rem] gap-7">
 		<div class="flex flex-col gap-5">
-			<div class="flex flex-col gap-2">
-				<Label for="title">Title</Label>
-				<Input id="title" bind:value={title} class="h-9 bg-card" />
-			</div>
 			{#if mode === 'paste'}
 				<div class="flex flex-col gap-2">
 					<div class="flex items-center justify-between">
-						<Label for="text">Text</Label>
+						<Label for="text">
+							Text
+							{#if fileName}
+								<span class="font-normal text-muted-foreground">· {fileName}</span>
+							{/if}
+						</Label>
 						<span class="font-mono text-xs text-muted-foreground">{words} words</span>
 					</div>
 					<Textarea id="text" bind:value={text} class="min-h-96 bg-card font-serif text-base" />

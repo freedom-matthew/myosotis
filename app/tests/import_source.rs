@@ -1,9 +1,12 @@
 mod common;
 
 use common::*;
-use myosotis_app::features::{import_source, inbox};
+use myosotis_app::features::{import_source, inbox, review};
 use myosotis_app::storage::SqliteCardRepo;
-use myosotis_core::{Card, DraftCard, Grade, ImportId, ImportStatus, InboxImport, SessionCard};
+use myosotis_core::{
+    Card, Depth, DraftCard, ExplanationRequest, Grade, ImportId, ImportStatus, InboxImport,
+    NewImport, SessionCard,
+};
 
 #[tokio::test]
 async fn generated_cards_wait_in_the_inbox_and_are_not_reviewed_yet() {
@@ -19,7 +22,7 @@ async fn generated_cards_wait_in_the_inbox_and_are_not_reviewed_yet() {
 }
 
 #[tokio::test]
-async fn an_accepted_card_is_ready_to_review_and_remembers_its_source() {
+async fn an_accepted_card_is_ready_to_review() {
     // given a generated card in the Inbox
     let repo: SqliteCardRepo = empty_collection().await;
     import_source_with(&repo, &FakeGenerator::producing(&["Cue?"])).await;
@@ -28,11 +31,9 @@ async fn an_accepted_card_is_ready_to_review_and_remembers_its_source() {
     // when I accept it
     inbox::accept(&repo, drafts[0].id, monday()).await.unwrap();
 
-    // then I can review it, and it shows where it came from
+    // then I can review it
     let session: Vec<SessionCard> = session_at(&repo, monday()).await;
     assert_eq!(questions(&session), vec!["Cue?"]);
-    assert_eq!(session[0].source_title.as_deref(), Some("Habit notes"));
-    assert_eq!(session[0].excerpt.as_deref(), Some("Passage about: Cue?"));
 }
 
 #[tokio::test]
@@ -102,18 +103,22 @@ async fn the_source_text_is_kept_until_the_inbox_is_finished_then_deleted() {
 }
 
 #[tokio::test]
-async fn cards_keep_their_source_excerpt_after_the_full_text_is_deleted() {
-    // given a card accepted from a source whose Inbox is finished
+async fn explain_still_knows_the_passage_after_the_source_text_is_deleted() {
+    // given a card accepted from a source whose Inbox is finished, so its text is gone
     let repo: SqliteCardRepo = empty_collection().await;
     import_source_with(&repo, &FakeGenerator::producing(&["Cue?"])).await;
     let drafts: Vec<DraftCard> = drafts_in_inbox(&repo).await;
     inbox::accept(&repo, drafts[0].id, monday()).await.unwrap();
 
-    // when I review it
-    let session: Vec<SessionCard> = session_at(&repo, monday()).await;
+    // when I ask for an explanation
+    let explainer: FakeExplainer = FakeExplainer::replying("A cue starts the habit.");
+    review::explain(&repo, &explainer, drafts[0].id)
+        .await
+        .unwrap();
 
-    // then its short excerpt is still available
-    assert_eq!(session[0].excerpt.as_deref(), Some("Passage about: Cue?"));
+    // then the AI still gets the passage the card came from, though I never see it
+    let asked: ExplanationRequest = explainer.last_request();
+    assert_eq!(asked.excerpt.as_deref(), Some("Passage about: Cue?"));
 }
 
 #[tokio::test]
@@ -254,4 +259,46 @@ async fn discarding_an_import_with_no_cards_removes_it() {
 
     // then it is gone
     assert!(the_inbox(&repo).await.is_empty());
+}
+
+/// Starts an import the way the New source screen does, then looks at the Inbox.
+async fn inbox_label_after_importing(name: &str, text: &str) -> String {
+    let repo: SqliteCardRepo = empty_collection().await;
+    let source: NewImport = NewImport {
+        title: name.to_string(),
+        text: text.to_string(),
+        depth: Depth::Balanced,
+        focus: None,
+        describe: true,
+    };
+    import_source::create(&repo, &source, monday())
+        .await
+        .unwrap();
+    the_inbox(&repo).await[0].title.clone()
+}
+
+#[tokio::test]
+async fn pasted_text_needs_no_name_and_is_labelled_by_its_first_words() {
+    // when I paste text without naming it
+    let label: String = inbox_label_after_importing(
+        "",
+        "Software engineering is hard. To be successful at it, we have to learn.",
+    )
+    .await;
+
+    // then the Inbox shows its first words
+    assert_eq!(label, "Software engineering is hard. To be…");
+}
+
+#[tokio::test]
+async fn an_opened_file_is_labelled_by_its_file_name() {
+    // when I open a file
+    let label: String = inbox_label_after_importing(
+        "01 Analyzing Business Domains",
+        "If you are anything like me",
+    )
+    .await;
+
+    // then the Inbox shows the file's name
+    assert_eq!(label, "01 Analyzing Business Domains");
 }

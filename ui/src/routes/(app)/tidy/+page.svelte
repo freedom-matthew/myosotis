@@ -113,7 +113,8 @@
 							<p class="font-serif text-base">{member.question}</p>
 							<p class="text-sm text-card-answer">{member.answer}</p>
 							<span class="text-xs text-muted-foreground">
-								{member.source_title ?? 'Added by hand'} · {member.review_count} reviews
+								{member.review_count}
+								{member.review_count === 1 ? 'review' : 'reviews'}
 							</span>
 							{#if member.keeps_history}
 								<span
@@ -134,7 +135,6 @@
 						<p class="font-serif text-lg">{question}</p>
 						<p class="text-sm text-card-answer">{answer}</p>
 					{/if}
-					<span class="text-xs text-muted-foreground">Keeps every source.</span>
 				</div>
 				<div class="flex flex-wrap gap-1">
 					<Button onclick={merge} class="gap-2">
