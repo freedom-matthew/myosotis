@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Minus, Plus } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import {
 		backUpNow,
@@ -21,10 +22,11 @@
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
-	import { Slider } from '#lib/components/ui/slider/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { SETTINGS_CHANGED } from '#lib/size.js';
 	import { applyTheme } from '#lib/theme.js';
+
+	const NEW_CARDS_STEP: number = 5;
 
 	let settings: Settings | null = $state<Settings | null>(null);
 	let claude: ClaudeStatus | null = $state<ClaudeStatus | null>(null);
@@ -85,6 +87,11 @@
 		const input: HTMLInputElement = event.currentTarget as HTMLInputElement;
 		const count: number = Number.parseInt(input.value, 10);
 		if (Number.isInteger(count) && count >= 0) save({ new_cards_per_day: count });
+		else if (settings) input.value = String(settings.new_cards_per_day);
+	}
+
+	function stepNewCards(change: number): void {
+		if (settings) save({ new_cards_per_day: Math.max(0, settings.new_cards_per_day + change) });
 	}
 
 	function day(backup: Backup): string {
@@ -178,29 +185,32 @@
 			<div class="flex flex-col divide-y rounded-2xl border bg-card">
 				<div class="flex items-center justify-between gap-6 p-5">
 					{@render row('New cards per day', '')}
-					<Input
-						type="number"
-						min="0"
-						value={settings.new_cards_per_day}
-						onchange={changeNewCards}
-						aria-label="New cards per day"
-						class="h-9 w-20 text-right font-mono"
-					/>
-				</div>
-				<div class="flex items-center justify-between gap-6 p-5">
-					{@render row('Desired retention', 'Higher means more reviews and better recall.')}
-					<div class="flex w-56 items-center gap-3">
-						<Slider
-							type="single"
-							min={80}
-							max={97}
-							step={1}
-							value={settings.desired_retention_percent}
-							onValueCommit={(value: number) => save({ desired_retention_percent: value })}
+					<div class="flex items-center gap-0.5 rounded-lg bg-accent/70 p-1">
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label="Fewer new cards"
+							onclick={() => stepNewCards(-NEW_CARDS_STEP)}
+							class="rounded-md text-foreground-secondary hover:bg-card hover:text-foreground"
+						>
+							<Minus />
+						</Button>
+						<Input
+							inputmode="numeric"
+							value={settings.new_cards_per_day}
+							onchange={changeNewCards}
+							aria-label="New cards per day"
+							class="h-8 w-14 rounded-md border-0 bg-card text-center font-mono shadow-xs dark:bg-card"
 						/>
-						<span class="w-10 text-right font-mono text-sm">
-							{settings.desired_retention_percent}%
-						</span>
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label="More new cards"
+							onclick={() => stepNewCards(NEW_CARDS_STEP)}
+							class="rounded-md text-foreground-secondary hover:bg-card hover:text-foreground"
+						>
+							<Plus />
+						</Button>
 					</div>
 				</div>
 			</div>

@@ -20,6 +20,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: light;
   --radius: 0.625rem;        /* 10px → rounded-lg: buttons, inputs */
   --card-radius: 1.25rem;    /* 20px → rounded-card: the flashcard */
   --card-shadow: 0 1px 2px rgb(29 30 34 / 0.04), 0 18px 48px rgb(29 30 34 / 0.06);
@@ -70,6 +71,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --card-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 18px 48px rgb(0 0 0 / 0.35);
   --primary-shadow: 0 6px 16px rgb(143 179 238 / 0.16);
   --background: #121419;
