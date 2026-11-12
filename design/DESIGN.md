@@ -160,7 +160,7 @@ Breadcrumb "Library" → title → "4 groups of similar cards found among 1,284.
 Single 720px column of white sections; rows = label (+ helper) left, control right.
 - **AI provider:** Provider, Model, API key (password, Test, "Connected"; stored in the system keychain, never in the DB).
 - **Reviewing:** New cards per day only (a − / + stepper in steps of 5, the number also typeable). Desired retention stays at FSRS's 90% and isn't shown: the app is deliberately minimal, with as few knobs as possible.
-- **Appearance:** Theme (Light | Dark | System), **Size** (Default | Larger | Largest: the whole window zooms 100 / 115 / 130%, for big screens; `⌘+ ⌘− ⌘0` anywhere), Card font (Serif | Sans), Reduce motion.
+- **Appearance:** Theme (Light | Dark | System), **Size** (Default | Larger | Largest: the whole window zooms 130 / 145 / 160%; Default is 130% because the base design reads small; `⌘+ ⌘− ⌘0` anywhere), Card font (Serif | Sans), Reduce motion.
 - **Data:** **Source text** (Delete when the Inbox is done — default | Keep the full text), **Check new cards for duplicates** (on), Collection folder, Backup and export, **Restore…** (dialog listing backups newest first with date, time and card count → confirm "Restore the backup from …?" · **Restore and restart**; the current collection is backed up first).
 
 ## 7. Card types — `mockups/card-types/`

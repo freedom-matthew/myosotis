@@ -63,9 +63,9 @@ impl Size {
     /// How much the window zooms everything: text, spacing and the sidebar alike.
     pub fn zoom(self) -> f64 {
         match self {
-            Size::Default => 1.0,
-            Size::Larger => 1.15,
-            Size::Largest => 1.3,
+            Size::Default => 1.3,
+            Size::Larger => 1.45,
+            Size::Largest => 1.6,
         }
     }
 }
