@@ -180,7 +180,7 @@
 					class="w-full"
 				>
 					{#each DEPTHS as option (option.value)}
-						<ToggleGroup.Item value={option.value} class="flex-1 text-xs">
+						<ToggleGroup.Item value={option.value} class="min-w-0 flex-1 shrink px-2 text-xs">
 							{option.label}
 						</ToggleGroup.Item>
 					{/each}

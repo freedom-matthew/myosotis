@@ -108,7 +108,7 @@
 				class="w-full"
 			>
 				{#each KINDS as option (option)}
-					<ToggleGroup.Item value={option} class="flex-1 text-xs">{KIND_LABELS[option]}</ToggleGroup.Item>
+					<ToggleGroup.Item value={option} class="min-w-0 flex-1 shrink px-2 text-xs">{KIND_LABELS[option]}</ToggleGroup.Item>
 				{/each}
 			</ToggleGroup.Root>
 			<span class="text-xs text-muted-foreground">{copy.hint}</span>
