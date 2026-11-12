@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT f.id AS \"forward!\", r.id AS \"reverse!\", f.question AS term,\n                      f.answer AS meaning,\n                      (SELECT excerpt FROM origin WHERE card_id = f.id LIMIT 1)\n                          AS \"excerpt?: String\"\n               FROM card f\n               JOIN card r ON r.id = f.sibling_id AND r.sibling_id = f.id\n               WHERE f.kind = 'concept' AND f.id < r.id AND f.status != 'draft'\n                 AND r.question = f.answer AND r.answer = f.question\n               ORDER BY f.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "forward!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "reverse!",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "term",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "question"
+          }
+        }
+      },
+      {
+        "name": "meaning",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "answer"
+          }
+        }
+      },
+      {
+        "name": "excerpt?: String",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "origin",
+            "name": "excerpt"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "5de0a7d3e59106bfb6f61476df71c0f779bcde34daa68bcfaf7563813f7e412c"
+}

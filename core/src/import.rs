@@ -3,7 +3,7 @@ use std::future::Future;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::card::{Card, CardId, CardKind, RepoError};
+use crate::card::{Card, CardId, CardKind, RepoError, Reverse};
 use crate::review::Schedule;
 
 pub type ImportId = i64;
@@ -125,6 +125,25 @@ pub struct GeneratedCard {
     pub question: String,
     pub answer: String,
     pub excerpt: String,
+    /// A concept's other direction.
+    #[serde(default)]
+    pub reverse: Option<Reverse>,
+}
+
+impl GeneratedCard {
+    /// Only a concept keeps a reverse, and a concept that came without one is a plain question.
+    pub fn settled(self) -> Self {
+        let concept: bool = self.kind == CardKind::Concept && self.reverse.is_some();
+        GeneratedCard {
+            kind: if concept || self.kind != CardKind::Concept {
+                self.kind
+            } else {
+                CardKind::Question
+            },
+            reverse: if concept { self.reverse } else { None },
+            ..self
+        }
+    }
 }
 
 /// Splits a long source at paragraph breaks, so each part fits one AI call.
@@ -156,10 +175,12 @@ pub struct RewriteRequest {
     pub kind: CardKind,
     pub question: String,
     pub answer: String,
+    pub reverse: Option<Reverse>,
     pub excerpt: Option<String>,
 }
 
-/// Port for whatever rewrites a card from its original passage.
+/// Port for whatever rewrites a card from its original passage. A concept comes back with
+/// its reverse.
 pub trait CardRewriter {
     fn rewrite(
         &self,
@@ -181,6 +202,7 @@ pub struct DraftCard {
     pub kind: CardKind,
     pub question: String,
     pub answer: String,
+    pub reverse: Option<Reverse>,
     pub excerpt: Option<String>,
     pub duplicate: Option<ExistingCard>,
 }
@@ -324,6 +346,7 @@ pub trait ImportRepo {
         import: ImportId,
     ) -> impl Future<Output = Result<(), RepoError>> + Send;
 
+    /// Imports still in progress: generating, waiting in the Inbox, or failed. Finished ones drop off.
     fn recent_imports(
         &self,
         limit: i64,
@@ -341,6 +364,31 @@ mod tests {
         let text: String = ["aaaa", "bbbb", "cccc"].join("\n\n");
         let parts: Vec<String> = split_source(&text, 10);
         assert_eq!(parts, vec!["aaaa\n\nbbbb", "cccc"]);
+    }
+
+    fn generated(kind: CardKind, reverse: Option<Reverse>) -> GeneratedCard {
+        GeneratedCard {
+            kind,
+            question: "Q?".to_string(),
+            answer: "A.".to_string(),
+            excerpt: String::new(),
+            reverse,
+        }
+    }
+
+    #[test]
+    fn a_concept_without_a_reverse_settles_as_a_question() {
+        let settled: GeneratedCard = generated(CardKind::Concept, None).settled();
+        assert_eq!(settled.kind, CardKind::Question);
+    }
+
+    #[test]
+    fn only_a_concept_keeps_its_reverse() {
+        let reverse: Reverse = Reverse::new("Back?", "Term.");
+        let concept: GeneratedCard = generated(CardKind::Concept, Some(reverse.clone())).settled();
+        assert_eq!(concept.reverse, Some(reverse.clone()));
+        let question: GeneratedCard = generated(CardKind::Question, Some(reverse)).settled();
+        assert_eq!(question.reverse, None);
     }
 
     #[test]

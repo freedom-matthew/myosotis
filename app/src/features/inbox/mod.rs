@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use myosotis_core::{
     Card, CardId, CardRewriter, DraftCard, GenerateError, ImportId, ImportRepo, InboxImport,
-    RepoError, RewriteRequest, Schedule,
+    RepoError, Reverse, RewriteRequest, Schedule,
 };
 use tauri::State;
 
@@ -42,6 +42,18 @@ pub async fn edit(
     repo.update_draft(card, &Card::new(question, answer)).await
 }
 
+/// Rewords a concept: both its question and the one that asks the other way round.
+pub async fn edit_concept(
+    repo: &impl ImportRepo,
+    card: CardId,
+    question: &str,
+    answer: &str,
+    reverse: &Reverse,
+) -> Result<(), RepoError> {
+    repo.update_draft(card, &Card::concept(question, answer, reverse.clone()))
+        .await
+}
+
 pub async fn delete(repo: &impl ImportRepo, card: CardId) -> Result<(), RepoError> {
     let import: ImportId = repo.delete_draft(card).await?;
     repo.finish_import_if_empty(import).await
@@ -65,6 +77,7 @@ pub async fn rewrite(
         kind: draft.kind,
         question: draft.question,
         answer: draft.answer,
+        reverse: draft.reverse,
         excerpt: draft.excerpt,
     };
     let better: Card = rewriter.rewrite(&request).await?;
@@ -101,10 +114,13 @@ pub async fn edit_draft(
     card: CardId,
     question: String,
     answer: String,
+    reverse: Option<Reverse>,
 ) -> Result<(), String> {
-    edit(repo.inner(), card, &question, &answer)
-        .await
-        .map_err(|error| error.to_string())
+    match reverse {
+        Some(reverse) => edit_concept(repo.inner(), card, &question, &answer, &reverse).await,
+        None => edit(repo.inner(), card, &question, &answer).await,
+    }
+    .map_err(|error| error.to_string())
 }
 
 #[tauri::command]

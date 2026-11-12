@@ -1,5 +1,6 @@
 pub mod add_card;
 pub mod backup;
+pub mod concept_questions;
 pub mod import_source;
 pub mod inbox;
 pub mod library;

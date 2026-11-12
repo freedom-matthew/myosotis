@@ -6,8 +6,9 @@ use std::process::{Output, Stdio};
 use std::time::Duration;
 
 use myosotis_core::{
-    Card, CardExplainer, CardGenerator, CardMarker, CardRewriter, ExplanationRequest,
-    GenerateError, GeneratedCard, GenerationRequest, Marking, MarkingRequest, RewriteRequest,
+    Card, CardExplainer, CardGenerator, CardKind, CardMarker, CardRewriter, ExplanationRequest,
+    GenerateError, GeneratedCard, GenerationRequest, Marking, MarkingRequest, Reverse,
+    RewriteRequest,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -41,14 +42,13 @@ no explanation in the source, gets no card.
 
 Card kinds. Set `kind` for each card:
 - `question`: a question and a short answer. The default.
-- `concept`: a term and its meaning, such as vocabulary or a named idea. The question is the \
-term, the answer its meaning in one sentence. It is also reviewed the other way round, so use \
-it only when recalling the term from its meaning makes sense too.
+- `concept`: a term worth knowing both ways round, such as vocabulary or a named idea. `question` asks what the term means and `answer` gives its meaning in one sentence. `reverse` is the other direction: its `question` describes the meaning and asks for the term, its `answer` is the term. Use it only when recalling the term from its meaning makes sense too. Other kinds have no `reverse`.
 
 Rules for every card:
 - Pick what matters: core concepts, principles, causes, surprising findings and useful \
 distinctions. Skip trivia, and examples that only illustrate.
 - One card, one idea. Split anything with an \"and\" in its answer.
+- Every question is a full sentence ending in a question mark, never a bare term or a heading. Put any context in the sentence (\"What is the business domain in DDD?\"), never in brackets (\"Business domain (DDD)\").
 - The question must make sense on its own, months later, without the source.
 - Ask for understanding (why, how, what is the difference) rather than recognition.
 - Answers are short: a phrase or one sentence. Only `describe` answers are longer.
@@ -106,7 +106,15 @@ const REWRITE_SCHEMA: &str = r#"{
   "type": "object",
   "properties": {
     "question": { "type": "string" },
-    "answer": { "type": "string" }
+    "answer": { "type": "string" },
+    "reverse": {
+      "type": "object",
+      "properties": {
+        "question": { "type": "string" },
+        "answer": { "type": "string" }
+      },
+      "required": ["question", "answer"]
+    }
   },
   "required": ["question", "answer"]
 }"#;
@@ -122,7 +130,15 @@ const CARDS_SCHEMA: &str = r#"{
           "kind": { "type": "string", "enum": ["question", "concept", "describe"] },
           "question": { "type": "string" },
           "answer": { "type": "string" },
-          "excerpt": { "type": "string" }
+          "excerpt": { "type": "string" },
+          "reverse": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "answer": { "type": "string" }
+            },
+            "required": ["question", "answer"]
+          }
         },
         "required": ["kind", "question", "answer", "excerpt"]
       }
@@ -137,6 +153,8 @@ pub struct ClaudeCode;
 struct Rewritten {
     question: String,
     answer: String,
+    #[serde(default)]
+    reverse: Option<Reverse>,
 }
 
 #[derive(Deserialize)]
@@ -157,20 +175,20 @@ impl CardGenerator for ClaudeCode {
 
 impl CardRewriter for ClaudeCode {
     async fn rewrite(&self, request: &RewriteRequest) -> Result<Card, GenerateError> {
-        let excerpt: &str = request.excerpt.as_deref().unwrap_or("not available");
-        let prompt: String = format!(
-            "<card>\nKind: {}\nQuestion: {}\nAnswer: {}\nSource passage: {excerpt}\n</card>",
-            request.kind.as_str(),
-            request.question,
-            request.answer
-        );
+        let prompt: String = rewrite_prompt(request);
         let output: Output = run_claude(REWRITE_PROMPT, Some(REWRITE_SCHEMA), &prompt).await?;
         let response: Value = read_response(&output)?;
         let rewritten: Rewritten = serde_json::from_value(response["structured_output"].clone())
             .map_err(|_| {
                 GenerateError("Claude Code's answer wasn't in the expected shape.".to_string())
             })?;
-        Ok(Card::new(rewritten.question, rewritten.answer))
+        let card: Card = Card::new(rewritten.question, rewritten.answer);
+        Ok(match (request.kind, rewritten.reverse) {
+            (CardKind::Concept, Some(reverse)) => {
+                Card::concept(card.question, card.answer, reverse)
+            }
+            _ => card,
+        })
     }
 }
 
@@ -204,6 +222,25 @@ fn user_prompt(request: &GenerationRequest) -> String {
         "{describe}Create about {} flashcards. Fewer is fine if the source doesn't justify \
          that many.\n{focus}Source title: {}\n\n<source>\n{}\n</source>",
         request.target_cards, request.title, request.text
+    )
+}
+
+fn rewrite_prompt(request: &RewriteRequest) -> String {
+    let excerpt: &str = request.excerpt.as_deref().unwrap_or("not available");
+    let reverse: String = request
+        .reverse
+        .as_ref()
+        .map_or_else(String::new, |reverse| {
+            format!(
+                "\nReverse question: {}\nReverse answer: {}",
+                reverse.question, reverse.answer
+            )
+        });
+    format!(
+        "<card>\nKind: {}\nQuestion: {}\nAnswer: {}{reverse}\nSource passage: {excerpt}\n</card>",
+        request.kind.as_str(),
+        request.question,
+        request.answer
     )
 }
 
@@ -484,11 +521,32 @@ mod tests {
             kind: CardKind::Question,
             question: "What does the text say about cues?".to_string(),
             answer: "Context.".to_string(),
+            reverse: None,
             excerpt: Some("Context is the strongest cue.".to_string()),
         };
         let better: Card = ClaudeCode.rewrite(&request).await.unwrap();
         println!("{better:#?}");
         assert!(!better.question.to_lowercase().contains("text"));
+    }
+
+    /// Calls the real Claude Code, so it uses plan limits. Run by hand with `--ignored`.
+    #[tokio::test]
+    #[ignore]
+    async fn real_claude_code_rewords_an_old_concept_both_ways_as_questions() {
+        let request: RewriteRequest = RewriteRequest {
+            kind: CardKind::Concept,
+            question: "Business domain (DDD)".to_string(),
+            answer: "A company's main area of activity.".to_string(),
+            reverse: None,
+            excerpt: None,
+        };
+        let better: Card = ClaudeCode.rewrite(&request).await.unwrap();
+        println!("{better:#?}");
+        let reverse: Reverse = better
+            .reverse
+            .expect("a concept comes back with its reverse");
+        assert!(better.question.ends_with('?') && !better.question.contains('('));
+        assert!(reverse.question.ends_with('?'));
     }
 
     /// Calls the real Claude Code, so it uses plan limits. Run by hand with `--ignored`.

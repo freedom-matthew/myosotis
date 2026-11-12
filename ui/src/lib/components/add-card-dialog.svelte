@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
-	import { addCard, type CardKind } from '#lib/api.js';
+	import { addCard, type CardKind, type Reverse } from '#lib/api.js';
 	import { addCardDialog } from '#lib/add-card.svelte.js';
 	import { KIND_LABELS } from '#lib/card-kind.js';
 	import Notice from '#lib/components/notice.svelte';
@@ -18,9 +18,9 @@
 	const COPY: Record<CardKind, KindCopy> = {
 		question: { hint: 'A question with a short answer.', question: 'Question', answer: 'Answer' },
 		concept: {
-			hint: 'A term and its meaning. You’ll also be asked it the other way round.',
-			question: 'Term',
-			answer: 'Meaning'
+			hint: 'A term you want both ways round. Write each direction as its own question.',
+			question: 'Question',
+			answer: 'Answer'
 		},
 		describe: {
 			hint: 'An open question you answer in your own words. Claude marks it against the model answer.',
@@ -29,15 +29,22 @@
 		}
 	};
 
-	let kind: CardKind = $state('question');
+	let kind: CardKind = $state<CardKind>('question');
 	let question: string = $state('');
 	let answer: string = $state('');
+	let reverseQuestion: string = $state('');
+	let reverseAnswer: string = $state('');
 	let saving: boolean = $state(false);
 	let error: string | null = $state(null);
 	let questionField: HTMLTextAreaElement | null = $state(null);
 
 	const copy: KindCopy = $derived(COPY[kind]);
-	const canAdd: boolean = $derived(question.trim() !== '' && answer.trim() !== '' && !saving);
+	const canAdd: boolean = $derived(
+		question.trim() !== '' &&
+			answer.trim() !== '' &&
+			(kind !== 'concept' || (reverseQuestion.trim() !== '' && reverseAnswer.trim() !== '')) &&
+			!saving
+	);
 
 	$effect(() => {
 		if (!addCardDialog.open) error = null;
@@ -48,9 +55,13 @@
 		saving = true;
 		error = null;
 		try {
-			await addCard({ kind, question, answer });
+			const reverse: Reverse | null =
+				kind === 'concept' ? { question: reverseQuestion, answer: reverseAnswer } : null;
+			await addCard({ kind, question, answer, reverse });
 			question = '';
 			answer = '';
+			reverseQuestion = '';
+			reverseAnswer = '';
 			addCardDialog.added += 1;
 			toast(kind === 'concept' ? 'Card added, both ways round' : 'Card added');
 			questionField?.focus();
@@ -120,6 +131,24 @@
 				class={cn('bg-card font-serif text-base', kind === 'describe' ? 'min-h-32' : 'min-h-20')}
 			/>
 		</div>
+		{#if kind === 'concept'}
+			<div class="flex flex-col gap-2">
+				<Label for="new-card-reverse-question">Other way round: question</Label>
+				<Textarea
+					id="new-card-reverse-question"
+					bind:value={reverseQuestion}
+					class="min-h-20 bg-card font-serif text-base"
+				/>
+			</div>
+			<div class="flex flex-col gap-2">
+				<Label for="new-card-reverse-answer">Other way round: answer</Label>
+				<Textarea
+					id="new-card-reverse-answer"
+					bind:value={reverseAnswer}
+					class="min-h-20 bg-card font-serif text-base"
+				/>
+			</div>
+		{/if}
 
 		<div class="flex items-center justify-between gap-4">
 			<span class="text-xs text-muted-foreground">Stays open for the next one</span>

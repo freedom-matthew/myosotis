@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Check } from '@lucide/svelte';
-	import { KIND_LABELS } from '#lib/card-kind.js';
-	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { toast } from 'svelte-sonner';
 	import {
 		acceptAllDrafts,
@@ -16,6 +14,7 @@
 		rewriteDraft,
 		stopImport,
 		type DraftCard,
+		type Reverse,
 		type InboxImport
 	} from '#lib/api.js';
 	import Notice from '#lib/components/notice.svelte';
@@ -35,6 +34,8 @@
 	let editing: boolean = $state(false);
 	let editQuestion: string = $state('');
 	let editAnswer: string = $state('');
+	let editReverseQuestion: string = $state('');
+	let editReverseAnswer: string = $state('');
 	let rewriting: boolean = $state(false);
 
 	const failed: InboxImport[] = $derived(imports.filter((item) => item.status === 'failed'));
@@ -111,6 +112,8 @@
 		if (!focused) return;
 		editQuestion = focused.question;
 		editAnswer = focused.answer;
+		editReverseQuestion = focused.reverse?.question ?? '';
+		editReverseAnswer = focused.reverse?.answer ?? '';
 		editing = true;
 	}
 
@@ -118,7 +121,10 @@
 		if (!focused) return;
 		const card: DraftCard = focused;
 		editing = false;
-		await act(() => editDraft(card.id, editQuestion, editAnswer));
+		const reverse: Reverse | null = card.reverse
+			? { question: editReverseQuestion, answer: editReverseAnswer }
+			: null;
+		await act(() => editDraft(card.id, editQuestion, editAnswer, reverse));
 	}
 
 	async function rewrite(card: DraftCard): Promise<void> {
@@ -234,6 +240,15 @@
 							{#if editing}
 								<Input bind:value={editQuestion} aria-label="Question" class="h-9" />
 								<Textarea bind:value={editAnswer} aria-label="Answer" />
+								{#if draft.reverse}
+									<span class="pt-1 text-xs text-muted-foreground">Other way round</span>
+									<Input
+										bind:value={editReverseQuestion}
+										aria-label="Other way round: question"
+										class="h-9"
+									/>
+									<Textarea bind:value={editReverseAnswer} aria-label="Other way round: answer" />
+								{/if}
 								<div class="flex gap-2">
 									<Button onclick={saveEdit} class="gap-2">
 										Save
@@ -276,13 +291,17 @@
 									</Button>
 								</div>
 							{:else}
-								{#if draft.kind !== 'question'}
-									<Badge variant="secondary" class="self-start">{KIND_LABELS[draft.kind]}</Badge>
-								{/if}
 								<h2 class="font-serif text-lg font-normal">
 									{draft.question}
 								</h2>
 								<p class="font-serif text-base text-card-answer">{draft.answer}</p>
+								{#if draft.reverse}
+									<div class="flex flex-col gap-1 border-t pt-3">
+										<span class="text-xs text-muted-foreground">Other way round</span>
+										<p class="font-serif text-lg">{draft.reverse.question}</p>
+										<p class="font-serif text-base text-card-answer">{draft.reverse.answer}</p>
+									</div>
+								{/if}
 								<div class="flex flex-wrap gap-1">
 									<Button onclick={() => act(() => acceptDraft(draft.id))} class="gap-2">
 										<Check size={14} />Accept
@@ -315,9 +334,6 @@
 							}}
 							class="cursor-pointer rounded-xl border bg-card p-4 text-left transition-colors hover:border-input outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
 						>
-							{#if draft.kind !== 'question'}
-								<span class="text-xs text-muted-foreground">{KIND_LABELS[draft.kind]}</span>
-							{/if}
 							<span class="block font-serif text-lg">
 								{draft.question}
 							</span>

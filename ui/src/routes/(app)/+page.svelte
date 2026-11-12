@@ -160,7 +160,7 @@
 
 		{#if summary.recent_imports.length > 0}
 			<section class="flex flex-col gap-3">
-				<h2 class="text-sm font-medium">Recent imports</h2>
+				<h2 class="text-sm font-medium">In progress</h2>
 				<div class="flex flex-col divide-y rounded-2xl border bg-card">
 					{#each summary.recent_imports as item (item.id)}
 						<div class="flex items-center gap-4 px-4 py-3 text-sm">

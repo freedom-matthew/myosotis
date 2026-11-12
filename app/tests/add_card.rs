@@ -3,13 +3,14 @@ mod common;
 use common::*;
 use myosotis_app::features::{add_card, library};
 use myosotis_app::storage::SqliteCardRepo;
-use myosotis_core::{AddCardError, CardKind, LibraryCard, NewCard, SessionCard};
+use myosotis_core::{AddCardError, CardKind, LibraryCard, NewCard, Reverse, SessionCard};
 
 fn written(kind: CardKind, question: &str, answer: &str) -> NewCard {
     NewCard {
         kind,
         question: question.to_string(),
         answer: answer.to_string(),
+        reverse: None,
     }
 }
 
@@ -56,18 +57,47 @@ async fn a_concept_i_add_is_reviewed_both_ways() {
     // given an empty collection
     let repo: SqliteCardRepo = empty_collection().await;
 
-    // when I add a concept
-    let card: NewCard = written(CardKind::Concept, "Haus", "House");
+    // when I add a concept with both directions written as questions
+    let card: NewCard = NewCard {
+        reverse: Some(Reverse::new(
+            "What is the German word for a house?",
+            "Haus.",
+        )),
+        ..written(
+            CardKind::Concept,
+            "What does the German word Haus mean?",
+            "A house.",
+        )
+    };
     add_card::handle(&repo, &card, monday()).await.unwrap();
 
-    // then the Library has it both ways round
+    // then the Library has both, each in my own words
     let cards: Vec<LibraryCard> = library_of(&repo).await;
     assert_eq!(cards.len(), 2);
-    assert!(
-        cards
-            .iter()
-            .any(|card| card.question == "House" && card.answer == "Haus")
-    );
+    assert!(cards.iter().any(
+        |card| card.question == "What is the German word for a house?" && card.answer == "Haus."
+    ));
+}
+
+#[tokio::test]
+async fn a_concept_i_add_needs_its_other_direction() {
+    // given an empty collection
+    let repo: SqliteCardRepo = empty_collection().await;
+
+    // when I add a concept but leave the other direction blank
+    let card: NewCard = NewCard {
+        reverse: Some(Reverse::new("", "Haus.")),
+        ..written(
+            CardKind::Concept,
+            "What does the German word Haus mean?",
+            "A house.",
+        )
+    };
+    let result: Result<i64, AddCardError> = add_card::handle(&repo, &card, monday()).await;
+
+    // then nothing is added
+    assert!(matches!(result, Err(AddCardError::Blank)));
+    assert!(library_of(&repo).await.is_empty());
 }
 
 #[tokio::test]

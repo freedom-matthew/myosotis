@@ -24,11 +24,15 @@ export type ExistingCard = {
 	review_count: number;
 };
 
+/** A concept's other direction, written as its own question. */
+export type Reverse = { question: string; answer: string };
+
 export type DraftCard = {
 	id: number;
 	kind: CardKind;
 	question: string;
 	answer: string;
+	reverse: Reverse | null;
 	excerpt: string | null;
 	duplicate: ExistingCard | null;
 };
@@ -117,7 +121,7 @@ export type NewImport = {
 
 export type Marking = { covered: string[]; missing: string[]; suggested_grade: Grade };
 
-export type NewCard = { kind: CardKind; question: string; answer: string };
+export type NewCard = { kind: CardKind; question: string; answer: string; reverse: Reverse | null };
 
 export type Backup = { name: string; taken_at: string; card_count: number | null };
 
@@ -167,8 +171,12 @@ export const inbox = (): Promise<InboxImport[]> => invoke('inbox');
 export const acceptDraft = (card: number): Promise<void> => invoke('accept_draft', { card });
 export const acceptAllDrafts = (id: number): Promise<void> =>
 	invoke('accept_all_drafts', { import: id });
-export const editDraft = (card: number, question: string, answer: string): Promise<void> =>
-	invoke('edit_draft', { card, question, answer });
+export const editDraft = (
+	card: number,
+	question: string,
+	answer: string,
+	reverse: Reverse | null
+): Promise<void> => invoke('edit_draft', { card, question, answer, reverse });
 export const deleteDraft = (card: number): Promise<void> => invoke('delete_draft', { card });
 export const addCard = (card: NewCard): Promise<number> => invoke('add_card', { card });
 export const listBackups = (): Promise<Backup[]> => invoke('list_backups');

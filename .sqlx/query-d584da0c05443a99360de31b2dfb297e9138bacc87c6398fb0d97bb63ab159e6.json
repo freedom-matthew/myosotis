@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT c.id AS \"id!\", c.kind, c.question, c.answer, o.excerpt AS \"excerpt?\",\n                          e.id AS \"existing_id?\", e.question AS \"existing_question?\",\n                          e.answer AS \"existing_answer?\",\n                          (SELECT source_title FROM origin WHERE card_id = e.id LIMIT 1)\n                              AS \"existing_source?: String\",\n                          (SELECT COUNT(*) FROM review WHERE card_id = e.id)\n                              AS \"existing_reviews!: i64\"\n                   FROM card c\n                   JOIN origin o ON o.card_id = c.id\n                   LEFT JOIN card e ON e.id = c.duplicate_of\n                   WHERE c.status = 'draft' AND o.import_id = ?\n                   ORDER BY c.id",
+  "query": "SELECT c.id AS \"id!\", c.kind, c.question, c.answer, c.reverse_question,\n                          c.reverse_answer, o.excerpt AS \"excerpt?\",\n                          e.id AS \"existing_id?\", e.question AS \"existing_question?\",\n                          e.answer AS \"existing_answer?\",\n                          (SELECT source_title FROM origin WHERE card_id = e.id LIMIT 1)\n                              AS \"existing_source?: String\",\n                          (SELECT COUNT(*) FROM review WHERE card_id = e.id)\n                              AS \"existing_reviews!: i64\"\n                   FROM card c\n                   JOIN origin o ON o.card_id = c.id\n                   LEFT JOIN card e ON e.id = c.duplicate_of\n                   WHERE c.status = 'draft' AND o.import_id = ?\n                   ORDER BY c.id",
   "describe": {
     "columns": [
       {
@@ -48,8 +48,30 @@
         }
       },
       {
-        "name": "excerpt?",
+        "name": "reverse_question",
         "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "reverse_question"
+          }
+        }
+      },
+      {
+        "name": "reverse_answer",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "reverse_answer"
+          }
+        }
+      },
+      {
+        "name": "excerpt?",
+        "ordinal": 6,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -60,7 +82,7 @@
       },
       {
         "name": "existing_id?",
-        "ordinal": 5,
+        "ordinal": 7,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -71,7 +93,7 @@
       },
       {
         "name": "existing_question?",
-        "ordinal": 6,
+        "ordinal": 8,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -82,7 +104,7 @@
       },
       {
         "name": "existing_answer?",
-        "ordinal": 7,
+        "ordinal": 9,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -93,7 +115,7 @@
       },
       {
         "name": "existing_source?: String",
-        "ordinal": 8,
+        "ordinal": 10,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -104,7 +126,7 @@
       },
       {
         "name": "existing_reviews!: i64",
-        "ordinal": 9,
+        "ordinal": 11,
         "type_info": "Null",
         "origin": "Expression"
       }
@@ -117,6 +139,8 @@
       false,
       false,
       false,
+      true,
+      true,
       false,
       null,
       false,
@@ -125,5 +149,5 @@
       null
     ]
   },
-  "hash": "01e20deb00970f35a846b0507925ceb9c0a7a06622cfd60a04a8cc38af99c307"
+  "hash": "d584da0c05443a99360de31b2dfb297e9138bacc87c6398fb0d97bb63ab159e6"
 }

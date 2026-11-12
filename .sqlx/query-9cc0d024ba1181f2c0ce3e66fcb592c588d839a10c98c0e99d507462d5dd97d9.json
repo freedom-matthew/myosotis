@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE card SET sibling_id = ?, reverse_question = NULL, reverse_answer = NULL\n             WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "9cc0d024ba1181f2c0ce3e66fcb592c588d839a10c98c0e99d507462d5dd97d9"
+}

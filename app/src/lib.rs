@@ -9,7 +9,8 @@ use chrono::Utc;
 use tauri::Manager;
 
 use crate::features::{
-    add_card, backup, import_source, inbox, library, list_cards, review, settings, tidy, today,
+    add_card, backup, concept_questions, import_source, inbox, library, list_cards, review,
+    settings, tidy, today,
 };
 use crate::storage::SqliteCardRepo;
 
@@ -36,6 +37,10 @@ pub fn run() {
                 Ok(saved) => settings::apply_size(app.handle(), saved.size),
                 Err(error) => eprintln!("could not load settings: {error}"),
             }
+            tauri::async_runtime::spawn(concept_questions::reword_after_startup(
+                repo.clone(),
+                backups,
+            ));
             app.manage(repo);
             Ok(())
         })

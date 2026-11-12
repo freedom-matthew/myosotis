@@ -6,8 +6,9 @@ use chrono::{DateTime, SecondsFormat, Utc};
 use myosotis_core::{
     Card, CardId, CardKind, CardRepo, Depth, DraftCard, DraftToStore, DueCard, ExistingCard,
     ExplanationRequest, GeneratedCard, GenerationRequest, Grade, ImportId, ImportRepo,
-    ImportStatus, InboxImport, LibraryRepo, NewCard, NewImport, Phase, RecentImport, RepoError,
-    ReviewRepo, Schedule, Settings, SettingsRepo, Size, StoredCard, Theme, TidyRepo,
+    ImportStatus, InboxImport, LibraryRepo, NewCard, NewImport, OldConcept, Phase, RecentImport,
+    RepoError, Reverse, ReviewRepo, Schedule, Settings, SettingsRepo, Size, StoredCard, Theme,
+    TidyRepo,
 };
 use sqlx::SqlitePool;
 use sqlx::migrate::Migrator;
@@ -162,26 +163,102 @@ impl SqliteCardRepo {
 
 impl CardRepo for SqliteCardRepo {
     async fn list(&self) -> Result<Vec<Card>, RepoError> {
-        sqlx::query_as!(
-            Card,
-            "SELECT question, answer FROM card WHERE status = 'active' ORDER BY id"
+        let rows =
+            sqlx::query!("SELECT question, answer FROM card WHERE status = 'active' ORDER BY id")
+                .fetch_all(&self.pool)
+                .await
+                .map_err(repo_error)?;
+        Ok(rows
+            .into_iter()
+            .map(|row| Card::new(row.question, row.answer))
+            .collect())
+    }
+
+    async fn old_concepts(&self) -> Result<Vec<OldConcept>, RepoError> {
+        let rows = sqlx::query!(
+            r#"SELECT f.id AS "forward!", r.id AS "reverse!", f.question AS term,
+                      f.answer AS meaning,
+                      (SELECT excerpt FROM origin WHERE card_id = f.id LIMIT 1)
+                          AS "excerpt?: String"
+               FROM card f
+               JOIN card r ON r.id = f.sibling_id AND r.sibling_id = f.id
+               WHERE f.kind = 'concept' AND f.id < r.id AND f.status != 'draft'
+                 AND r.question = f.answer AND r.answer = f.question
+               ORDER BY f.id"#
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(repo_error)
+        .map_err(repo_error)?;
+        Ok(rows
+            .into_iter()
+            .map(|row| OldConcept {
+                forward: row.forward,
+                reverse: row.reverse,
+                term: row.term,
+                meaning: row.meaning,
+                excerpt: row.excerpt,
+            })
+            .collect())
+    }
+
+    async fn reword_concept(
+        &self,
+        old: &OldConcept,
+        card: &Card,
+        reverse: &Reverse,
+    ) -> Result<(), RepoError> {
+        let mut transaction: SqliteTransaction<'static> = self.begin().await?;
+        let forward: u64 = sqlx::query!(
+            "UPDATE card SET question = ?, answer = ? WHERE id = ? AND question = ? AND answer = ?",
+            card.question,
+            card.answer,
+            old.forward,
+            old.term,
+            old.meaning
+        )
+        .execute(&mut *transaction)
+        .await
+        .map_err(repo_error)?
+        .rows_affected();
+        let other: u64 = sqlx::query!(
+            "UPDATE card SET question = ?, answer = ? WHERE id = ? AND question = ? AND answer = ?",
+            reverse.question,
+            reverse.answer,
+            old.reverse,
+            old.meaning,
+            old.term
+        )
+        .execute(&mut *transaction)
+        .await
+        .map_err(repo_error)?
+        .rows_affected();
+        // Edited since it was found: leave both sides as they are.
+        if forward == 1 && other == 1 {
+            transaction.commit().await.map_err(repo_error)?;
+        }
+        Ok(())
     }
 
     async fn add(&self, card: &NewCard, schedule: &Schedule) -> Result<CardId, RepoError> {
         let mut transaction: SqliteTransaction<'static> = self.begin().await?;
         let kind: &str = card.kind.as_str();
         let created_at: String = to_db(schedule.last_review);
+        let reverse_question: Option<&str> = card
+            .reverse
+            .as_ref()
+            .map(|reverse| reverse.question.as_str());
+        let reverse_answer: Option<&str> =
+            card.reverse.as_ref().map(|reverse| reverse.answer.as_str());
         let id: CardId = sqlx::query_scalar!(
-            r#"INSERT INTO card (kind, question, answer, status, created_at)
-               VALUES (?, ?, ?, 'active', ?)
+            r#"INSERT INTO card (kind, question, answer, reverse_question, reverse_answer, status,
+                                 created_at)
+               VALUES (?, ?, ?, ?, ?, 'active', ?)
                RETURNING id AS "id!""#,
             kind,
             card.question,
             card.answer,
+            reverse_question,
+            reverse_answer,
             created_at
         )
         .fetch_one(&mut *transaction)
@@ -765,13 +842,22 @@ impl ImportRepo for SqliteCardRepo {
         for draft in cards {
             let card: &GeneratedCard = &draft.card;
             let kind: &str = card.kind.as_str();
+            let reverse_question: Option<&str> = card
+                .reverse
+                .as_ref()
+                .map(|reverse| reverse.question.as_str());
+            let reverse_answer: Option<&str> =
+                card.reverse.as_ref().map(|reverse| reverse.answer.as_str());
             let id: i64 = sqlx::query_scalar!(
-                r#"INSERT INTO card (kind, question, answer, status, duplicate_of, created_at)
-                   VALUES (?, ?, ?, 'draft', ?, (SELECT created_at FROM import WHERE id = ?))
+                r#"INSERT INTO card (kind, question, answer, reverse_question, reverse_answer, status,
+                                     duplicate_of, created_at)
+                   VALUES (?, ?, ?, ?, ?, 'draft', ?, (SELECT created_at FROM import WHERE id = ?))
                    RETURNING id AS "id!""#,
                 kind,
                 card.question,
                 card.answer,
+                reverse_question,
+                reverse_answer,
                 draft.duplicate_of,
                 import
             )
@@ -838,7 +924,8 @@ impl ImportRepo for SqliteCardRepo {
         let mut imports: Vec<InboxImport> = Vec::with_capacity(rows.len());
         for row in rows {
             let drafts: Vec<DraftCard> = sqlx::query!(
-                r#"SELECT c.id AS "id!", c.kind, c.question, c.answer, o.excerpt AS "excerpt?",
+                r#"SELECT c.id AS "id!", c.kind, c.question, c.answer, c.reverse_question,
+                          c.reverse_answer, o.excerpt AS "excerpt?",
                           e.id AS "existing_id?", e.question AS "existing_question?",
                           e.answer AS "existing_answer?",
                           (SELECT source_title FROM origin WHERE card_id = e.id LIMIT 1)
@@ -861,6 +948,7 @@ impl ImportRepo for SqliteCardRepo {
                 kind: CardKind::parse(&draft.kind),
                 question: draft.question,
                 answer: draft.answer,
+                reverse: reverse_of(draft.reverse_question, draft.reverse_answer),
                 excerpt: draft.excerpt,
                 duplicate: draft.existing_id.map(|id| ExistingCard {
                     id,
@@ -888,7 +976,8 @@ impl ImportRepo for SqliteCardRepo {
 
     async fn draft(&self, card: CardId) -> Result<DraftCard, RepoError> {
         let row = sqlx::query!(
-            r#"SELECT c.id AS "id!", c.kind, c.question, c.answer, o.excerpt AS "excerpt?"
+            r#"SELECT c.id AS "id!", c.kind, c.question, c.answer, c.reverse_question,
+                      c.reverse_answer, o.excerpt AS "excerpt?"
                FROM card c
                LEFT JOIN origin o ON o.card_id = c.id
                WHERE c.id = ?"#,
@@ -902,6 +991,7 @@ impl ImportRepo for SqliteCardRepo {
             kind: CardKind::parse(&row.kind),
             question: row.question,
             answer: row.answer,
+            reverse: reverse_of(row.reverse_question, row.reverse_answer),
             excerpt: row.excerpt,
             duplicate: None,
         })
@@ -964,10 +1054,24 @@ impl ImportRepo for SqliteCardRepo {
     }
 
     async fn update_draft(&self, card: CardId, content: &Card) -> Result<(), RepoError> {
+        let reverse_question: Option<&str> = content
+            .reverse
+            .as_ref()
+            .map(|reverse| reverse.question.as_str());
+        let reverse_answer: Option<&str> = content
+            .reverse
+            .as_ref()
+            .map(|reverse| reverse.answer.as_str());
+        // A concept keeps its reverse unless the new content brings one.
         sqlx::query!(
-            "UPDATE card SET question = ?, answer = ? WHERE id = ? AND status = 'draft'",
+            "UPDATE card SET question = ?, answer = ?,
+                    reverse_question = COALESCE(?, reverse_question),
+                    reverse_answer = COALESCE(?, reverse_answer)
+             WHERE id = ? AND status = 'draft'",
             content.question,
             content.answer,
+            reverse_question,
+            reverse_answer,
             card
         )
         .execute(&self.pool)
@@ -1023,6 +1127,7 @@ impl ImportRepo for SqliteCardRepo {
                FROM import i
                LEFT JOIN origin o ON o.import_id = i.id
                LEFT JOIN card c ON c.id = o.card_id
+               WHERE i.status != 'done'
                GROUP BY i.id
                ORDER BY i.id DESC
                LIMIT ?"#,
@@ -1054,14 +1159,16 @@ impl ImportRepo for SqliteCardRepo {
     }
 }
 
-/// A concept card is reviewed both ways, so accepting one adds the other direction.
+/// A concept card is reviewed both ways, so accepting one adds the other direction, from
+/// the reverse written for it. (Without one, the sides are swapped, as concepts once were.)
 async fn add_other_direction(
     transaction: &mut SqliteTransaction<'static>,
     card: CardId,
 ) -> Result<(), RepoError> {
     let sibling: Option<i64> = sqlx::query_scalar!(
         r#"INSERT INTO card (kind, question, answer, status, created_at, due, last_review, sibling_id)
-           SELECT kind, answer, question, 'active', created_at, due, last_review, id
+           SELECT kind, COALESCE(reverse_question, answer), COALESCE(reverse_answer, question),
+                  'active', created_at, due, last_review, id
            FROM card WHERE id = ? AND kind = 'concept'
            RETURNING id AS "id!""#,
         card
@@ -1071,10 +1178,15 @@ async fn add_other_direction(
     .map_err(repo_error)?;
 
     if let Some(sibling) = sibling {
-        sqlx::query!("UPDATE card SET sibling_id = ? WHERE id = ?", sibling, card)
-            .execute(&mut **transaction)
-            .await
-            .map_err(repo_error)?;
+        sqlx::query!(
+            "UPDATE card SET sibling_id = ?, reverse_question = NULL, reverse_answer = NULL
+             WHERE id = ?",
+            sibling,
+            card
+        )
+        .execute(&mut **transaction)
+        .await
+        .map_err(repo_error)?;
         sqlx::query!(
             "INSERT INTO origin (card_id, import_id, source_title, source_kind, excerpt, imported_at)
              SELECT ?, import_id, source_title, source_kind, excerpt, imported_at
@@ -1087,6 +1199,13 @@ async fn add_other_direction(
         .map_err(repo_error)?;
     }
     Ok(())
+}
+
+fn reverse_of(question: Option<String>, answer: Option<String>) -> Option<Reverse> {
+    Some(Reverse {
+        question: question?,
+        answer: answer?,
+    })
 }
 
 /// Fixed-width UTC text, so comparing strings in SQL compares times.

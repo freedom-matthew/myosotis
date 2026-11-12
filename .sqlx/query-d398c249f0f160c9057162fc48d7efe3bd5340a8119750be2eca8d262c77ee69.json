@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT c.id AS \"id!\", c.kind, c.question, c.answer, o.excerpt AS \"excerpt?\"\n               FROM card c\n               LEFT JOIN origin o ON o.card_id = c.id\n               WHERE c.id = ?",
+  "query": "SELECT c.id AS \"id!\", c.kind, c.question, c.answer, c.reverse_question,\n                      c.reverse_answer, o.excerpt AS \"excerpt?\"\n               FROM card c\n               LEFT JOIN origin o ON o.card_id = c.id\n               WHERE c.id = ?",
   "describe": {
     "columns": [
       {
@@ -48,8 +48,30 @@
         }
       },
       {
-        "name": "excerpt?",
+        "name": "reverse_question",
         "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "reverse_question"
+          }
+        }
+      },
+      {
+        "name": "reverse_answer",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "reverse_answer"
+          }
+        }
+      },
+      {
+        "name": "excerpt?",
+        "ordinal": 6,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -67,8 +89,10 @@
       false,
       false,
       false,
+      true,
+      true,
       true
     ]
   },
-  "hash": "f8a25a07cc39736bd59156a1bd8788cf2e6575fab8e6c5f9903fe421c1bc9148"
+  "hash": "d398c249f0f160c9057162fc48d7efe3bd5340a8119750be2eca8d262c77ee69"
 }

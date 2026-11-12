@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT i.id AS \"id!\", i.title, i.status, i.created_at,\n                      COUNT(CASE WHEN c.status = 'active' THEN 1 END) AS \"card_count!: i64\",\n                      COUNT(CASE WHEN c.status = 'draft' THEN 1 END) AS \"draft_count!: i64\"\n               FROM import i\n               LEFT JOIN origin o ON o.import_id = i.id\n               LEFT JOIN card c ON c.id = o.card_id\n               GROUP BY i.id\n               ORDER BY i.id DESC\n               LIMIT ?",
+  "query": "SELECT i.id AS \"id!\", i.title, i.status, i.created_at,\n                      COUNT(CASE WHEN c.status = 'active' THEN 1 END) AS \"card_count!: i64\",\n                      COUNT(CASE WHEN c.status = 'draft' THEN 1 END) AS \"draft_count!: i64\"\n               FROM import i\n               LEFT JOIN origin o ON o.import_id = i.id\n               LEFT JOIN card c ON c.id = o.card_id\n               WHERE i.status != 'done'\n               GROUP BY i.id\n               ORDER BY i.id DESC\n               LIMIT ?",
   "describe": {
     "columns": [
       {
@@ -72,5 +72,5 @@
       false
     ]
   },
-  "hash": "286f1b2ebe77ef4bc24f270480098b8332ccb77b9e60da28b4821710c90cfc0f"
+  "hash": "6693c915e13be44af4924461bd71104de68425756e013c62dd930bf63ebc21bb"
 }

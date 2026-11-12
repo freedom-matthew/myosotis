@@ -2,9 +2,9 @@ mod common;
 
 use chrono::{DateTime, Duration, Utc};
 use common::*;
-use myosotis_app::features::today;
+use myosotis_app::features::{inbox, today};
 use myosotis_app::storage::SqliteCardRepo;
-use myosotis_core::{Grade, SessionCard, TodaySummary};
+use myosotis_core::{Grade, ImportId, ImportStatus, SessionCard, TodaySummary};
 
 async fn summary_at(repo: &SqliteCardRepo, now: DateTime<Utc>) -> TodaySummary {
     let start_of_day: DateTime<Utc> = now - Duration::hours(1);
@@ -96,4 +96,48 @@ async fn there_is_no_retention_figure_before_any_due_reviews() {
 
     // then there is no figure to show
     assert_eq!(summary.retention_percent, None);
+}
+
+async fn imports_on_today(repo: &SqliteCardRepo) -> Vec<ImportStatus> {
+    summary_at(repo, monday())
+        .await
+        .recent_imports
+        .iter()
+        .map(|import| import.status)
+        .collect()
+}
+
+#[tokio::test]
+async fn an_import_with_cards_to_check_shows_on_today() {
+    // given a source whose cards wait in the Inbox
+    let repo: SqliteCardRepo = empty_collection().await;
+    import_source_with(&repo, &FakeGenerator::producing(&["One?", "Two?"])).await;
+
+    // when I open Today
+    // then the import is listed
+    assert_eq!(imports_on_today(&repo).await, vec![ImportStatus::InInbox]);
+}
+
+#[tokio::test]
+async fn an_import_leaves_today_once_all_its_cards_are_checked() {
+    // given a source whose cards I have all accepted
+    let repo: SqliteCardRepo = empty_collection().await;
+    let import: ImportId =
+        import_source_with(&repo, &FakeGenerator::producing(&["One?", "Two?"])).await;
+    inbox::accept_all(&repo, import, monday()).await.unwrap();
+
+    // when I open Today
+    // then the finished import is no longer listed
+    assert!(imports_on_today(&repo).await.is_empty());
+}
+
+#[tokio::test]
+async fn a_failed_import_stays_on_today_until_i_deal_with_it() {
+    // given a source that failed to become cards
+    let repo: SqliteCardRepo = empty_collection().await;
+    import_source_with(&repo, &FakeGenerator::failing_with("Claude is unavailable")).await;
+
+    // when I open Today
+    // then I can still see that it failed
+    assert_eq!(imports_on_today(&repo).await, vec![ImportStatus::Failed]);
 }

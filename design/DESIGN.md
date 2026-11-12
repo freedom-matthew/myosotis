@@ -127,12 +127,12 @@ Import    id, title, full_text, status (generating|in_inbox|done), created_at
 ## 6. Screens
 
 ### Today — `screens/Today.dc.html`
-Date eyebrow → headline `text-5xl` "37 cards are due today." → "About 9 minutes · 28 reviews and 9 new" → **Start review** (primary, `Space`) + link "Only reviews, skip new". When nothing is due and the collection is empty, just a line of text; no New source button (the sidebar has it). Three tiles, sharing the full width (the sidebar already counts the Inbox): **Next 7 days** (bars, today in `chart-1`), **Retention, 30 days**, **Keeps slipping** (focused session with Rewrite / Explain). **Recent imports** list (title, status such as "12 in Inbox" or "22 cards", relative date).
+Date eyebrow → headline `text-5xl` "37 cards are due today." → "About 9 minutes · 28 reviews and 9 new" → **Start review** (primary, `Space`) + link "Only reviews, skip new". When nothing is due and the collection is empty, just a line of text; no New source button (the sidebar has it). Three tiles, sharing the full width (the sidebar already counts the Inbox): **Next 7 days** (bars, today in `chart-1`), **Retention, 30 days**, **Keeps slipping** (focused session with Rewrite / Explain). **In progress** list (label, status such as "Generating", "12 in Inbox" or "Failed", relative date): only imports not yet finished, so it cleans itself once every card is checked; hidden when empty.
 States: nothing due → "Nothing due today." + next due time. No API key → quiet banner linking to Settings.
 
 ### Review — `screens/Review.dc.html` (the core loop)
 - Top bar: End session (`Esc`) · counter "12 of 37" (mono) + 3px progress bar · Undo (`Z`).
-- Card: max-w 680px, `rounded-card`, `shadow-card`, `border-card-border`. Type line (12px muted; only for Concept and Describe) → question `text-3xl` serif. No source name.
+- Card: max-w 680px, `rounded-card`, `shadow-card`, `border-card-border`. Question `text-3xl` serif. No type line and no source name: every card reads as a full question.
 - Before reveal: wide secondary **Show answer** (`Space`), max 360px.
 - After reveal (`animate-reveal`): divider → answer `text-xl` → ghost actions **Explain `X`** (inline `muted` box with AI explanation), **Suspend `S`**, **Edit card `E`**.
 - Grade bar (`animate-grades`): 4 buttons, max 560px, `rounded-xl`; label + "key · interval" (mono); **Good** = `primary` + `shadow-primary`. Intervals from the FSRS preview.
@@ -148,7 +148,7 @@ Title + helper text; segmented **Paste text | Open file**. Left: Text textarea (
 - `J/K` move focus; key-hint footer.
 
 ### Library — `screens/Library.dc.html`
-- Title, "1,284 cards", **Tidy up** button with a count badge, **Add card `N`** (primary; also in `⌘K`). Add card is a dialog: Question | Concept | Describe switch with a one-line hint, two serif fields whose labels follow the type (Question/Answer, Term/Meaning, Question/Model answer), **Add card `⌘↵`** + **Done**; it stays open for the next card. Cards added by hand show "By hand" as their origin.
+- Title, "1,284 cards", **Tidy up** button with a count badge, **Add card `N`** (primary; also in `⌘K`). Add card is a dialog: Question | Concept | Describe switch with a one-line hint, two serif fields whose labels follow the type (Question/Answer, Question/Model answer); a Concept adds two more, "Other way round: question" and "… answer", **Add card `⌘↵`** + **Done**; it stays open for the next card. Cards added by hand show "By hand" as their origin.
 - Search (`/`, searches questions and answers) + filter chips: All, Due today, New, Low recall, Suspended.
 - Table: Question · Recall now (bar + %, FSRS retrievability) · Next. Selected row: `primary-soft` + 3px inset `primary` bar.
 - Detail panel: Question, Answer (serif textareas), meta (Reviews, Next review), Suspend, Delete.
@@ -165,13 +165,15 @@ Single 720px column of white sections; rows = label (+ helper) left, control rig
 
 ## 7. Card types — `mockups/card-types/`
 
-Three types, deliberately. All share the review shell: origin line → question → (back) divider → answer → extras. The origin line names the type for Concept ("⇄ Concept, both ways round") and Describe ("In your own words").
+Three types, deliberately. All share the review shell: question → (back) divider → answer → extras. Types are never labelled, in Review or the Inbox: **every question is a full sentence ending in a question mark**, never a bare term or bracketed context ("What is the business domain in DDD?", not "Business domain (DDD)"), so a card explains itself. Describe shows itself by its text box.
 
 | Type | Front → back | Grading | Mockup |
 |---|---|---|---|
 | `question` Question | question → short answer | manual 1–4 | Type-QA |
-| `concept` Concept | term → meaning in one sentence; accepting it adds the reverse card (meaning → term) | manual 1–4; the two directions are never reviewed on the same day | Type-TwoWay |
+| `concept` Concept | two questions, each in its own words: "What is X?" → meaning in one sentence, and the reverse "What do we call …?" → the term. The Inbox shows both (the reverse under "Other way round") and edits both; accepting adds the reverse card | manual 1–4; the two directions are never reviewed on the same day | Type-TwoWay |
 | `describe` Describe | open why/how question + textarea "Your description" (`⌘↵` to check · uses Claude) → your words, covered ✓ / missing ○, verdict pill; **Model answer `M`** on request | AI-suggested | Type-Explain |
+
+Concepts made before this rule (front and back simply swapped) are reworded once, in the background after startup, with a backup first; their review history stays. A concept the AI sends without its reverse is kept as a Question.
 
 The AI makes all three at import; Describe sparingly (1–3 per source) and only when "Describe in your own words" is ticked. Each Describe check is one AI call. "Show answer without checking" skips the AI and grades manually.
 

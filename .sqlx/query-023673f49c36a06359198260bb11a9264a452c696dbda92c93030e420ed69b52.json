@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO card (kind, question, answer, status, created_at, due, last_review, sibling_id)\n           SELECT kind, COALESCE(reverse_question, answer), COALESCE(reverse_answer, question),\n                  'active', created_at, due, last_review, id\n           FROM card WHERE id = ? AND kind = 'concept'\n           RETURNING id AS \"id!\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "023673f49c36a06359198260bb11a9264a452c696dbda92c93030e420ed69b52"
+}

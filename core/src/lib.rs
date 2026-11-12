@@ -10,7 +10,9 @@ mod source_file;
 mod tidy;
 mod today;
 
-pub use card::{AddCardError, Card, CardId, CardKind, CardRepo, NewCard, RepoError};
+pub use card::{
+    AddCardError, Card, CardId, CardKind, CardRepo, NewCard, OldConcept, RepoError, Reverse,
+};
 pub use describe::{CardMarker, Marking, MarkingRequest};
 pub use explain::{CardExplainer, ExplanationRequest};
 pub use import::{

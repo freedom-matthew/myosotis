@@ -10,7 +10,7 @@ use myosotis_app::storage::SqliteCardRepo;
 use myosotis_core::{
     Card, CardExplainer, CardGenerator, CardKind, CardMarker, CardRewriter, Depth, DraftCard,
     ExplanationRequest, GenerateError, GeneratedCard, GenerationRequest, Grade, ImportId,
-    InboxImport, Marking, MarkingRequest, NewImport, RewriteRequest, SessionCard,
+    InboxImport, Marking, MarkingRequest, NewImport, Reverse, RewriteRequest, SessionCard,
 };
 
 /// Monday morning. Every test starts here, so nothing depends on the real clock.
@@ -77,6 +77,7 @@ impl FakeGenerator {
                 question: question.to_string(),
                 answer: format!("Answer to: {question}"),
                 excerpt: format!("Passage about: {question}"),
+                reverse: None,
             })
             .collect();
         Self::with_cards(cards)
@@ -124,6 +125,36 @@ impl CardRewriter for FakeRewriter {
     async fn rewrite(&self, _request: &RewriteRequest) -> Result<Card, GenerateError> {
         Ok(self.better.clone())
     }
+}
+
+/// A rewriter that can't reach the AI.
+pub struct UnavailableRewriter;
+
+impl CardRewriter for UnavailableRewriter {
+    async fn rewrite(&self, _request: &RewriteRequest) -> Result<Card, GenerateError> {
+        Err(GenerateError("Claude Code is not signed in".to_string()))
+    }
+}
+
+/// The AI made a concept with both directions as questions, and I accepted it.
+pub async fn accepted_concept(
+    repo: &SqliteCardRepo,
+    question: &str,
+    answer: &str,
+    reverse: Reverse,
+) -> Vec<SessionCard> {
+    let card: GeneratedCard = GeneratedCard {
+        kind: CardKind::Concept,
+        question: question.to_string(),
+        answer: answer.to_string(),
+        excerpt: "A passage.".to_string(),
+        reverse: Some(reverse),
+    };
+    import_source_with(repo, &FakeGenerator::with_cards(vec![card])).await;
+    for draft in drafts_in_inbox(repo).await {
+        inbox::accept(repo, draft.id, monday()).await.unwrap();
+    }
+    session_at(repo, monday()).await
 }
 
 /// Stands in for the AI when explaining: remembers what it was asked.
@@ -204,6 +235,7 @@ pub async fn accepted_card(
         question: question.to_string(),
         answer: answer.to_string(),
         excerpt: "A passage.".to_string(),
+        reverse: None,
     };
     import_source_with(repo, &FakeGenerator::with_cards(vec![card])).await;
     for draft in drafts_in_inbox(repo).await {

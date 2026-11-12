@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE card SET question = ?, answer = ?,\n                    reverse_question = COALESCE(?, reverse_question),\n                    reverse_answer = COALESCE(?, reverse_answer)\n             WHERE id = ? AND status = 'draft'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "a757fb0d75a4386bb9cd9d402fcc6b6349f467e665d26f942a3034c1aad4949a"
+}

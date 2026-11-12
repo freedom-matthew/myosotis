@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
-	import { ArrowLeftRight, Check, Circle, PenLine, Undo2, X } from '@lucide/svelte';
+	import { Check, Circle, Undo2, X } from '@lucide/svelte';
 	import {
 		editCard,
 		explainCard,
@@ -277,15 +277,6 @@
 			<article
 				class="flex w-full max-w-170 flex-col gap-6 rounded-card border border-card-border bg-card px-12 py-11 shadow-card"
 			>
-				{#if card.kind !== 'question'}
-					<span class="flex items-center gap-2 text-xs text-muted-foreground">
-						{#if card.kind === 'concept'}
-							<ArrowLeftRight size={13} />Concept, both ways round
-						{:else if card.kind === 'describe'}
-							<PenLine size={13} />In your own words
-						{/if}
-					</span>
-				{/if}
 				{#if editing}
 					<Input bind:value={editQuestion} aria-label="Question" class="h-9 font-serif text-base" />
 					<Textarea bind:value={editAnswer} aria-label="Answer" class="font-serif text-base" />
