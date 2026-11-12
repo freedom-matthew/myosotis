@@ -292,7 +292,7 @@
 					<div class="flex gap-2">
 						<Button onclick={saveEdit} class="gap-2">
 							Save
-							<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">⌘↵</Kbd>
+							<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground"><span>⌘</span><span>↵</span></Kbd>
 						</Button>
 						<Button variant="ghost" onclick={() => (editing = false)}>Cancel</Button>
 					</div>
@@ -310,7 +310,7 @@
 								disabled={checking}
 								class="min-h-28 font-serif text-base"
 							/>
-							<span class="text-xs text-muted-foreground">⌘↵ to check · uses Claude</span>
+							<span class="text-xs text-muted-foreground">⌘ ↵ to check · uses Claude</span>
 						</div>
 						{#if checking}
 							<div class="flex flex-col gap-2 rounded-lg bg-muted px-4 py-3.5">
@@ -444,7 +444,7 @@
 						class="h-auto w-full gap-3 rounded-xl px-5 py-4 text-base shadow-primary"
 					>
 						{checking ? 'Marking…' : 'Check'}
-						<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">⌘↵</Kbd>
+						<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground"><span>⌘</span><span>↵</span></Kbd>
 					</Button>
 					<Button
 						variant="ghost"

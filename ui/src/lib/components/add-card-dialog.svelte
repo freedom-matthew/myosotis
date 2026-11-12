@@ -127,7 +127,7 @@
 				<Button variant="ghost" onclick={() => (addCardDialog.open = false)}>Done</Button>
 				<Button onclick={add} disabled={!canAdd} class="gap-2">
 					Add card
-					<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">⌘↵</Kbd>
+					<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground"><span>⌘</span><span>↵</span></Kbd>
 				</Button>
 			</div>
 		</div>

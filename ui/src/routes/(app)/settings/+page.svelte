@@ -218,7 +218,7 @@
 					</ToggleGroup.Root>
 				</div>
 				<div class="flex items-center justify-between gap-6 p-5">
-					{@render row('Size', 'Everything grows together, for big screens. ⌘+ and ⌘− work anywhere.')}
+					{@render row('Size', 'Everything grows together, for big screens. ⌘ + and ⌘ − work anywhere.')}
 					<ToggleGroup.Root type="single" value={settings.size} onValueChange={chooseSize}>
 						<ToggleGroup.Item value="default">Default</ToggleGroup.Item>
 						<ToggleGroup.Item value="larger">Larger</ToggleGroup.Item>

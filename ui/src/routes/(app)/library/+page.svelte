@@ -219,9 +219,15 @@
 			onValueChange={(value: string) => {
 				if (value) filter = value as Filter;
 			}}
+			class="flex-wrap gap-1.5 bg-transparent p-0"
 		>
 			{#each FILTERS as option (option.value)}
-				<ToggleGroup.Item value={option.value} class="text-xs">{option.label}</ToggleGroup.Item>
+				<ToggleGroup.Item
+					value={option.value}
+					class="rounded-full border border-input bg-card px-3 py-2 text-xs text-foreground data-[state=on]:border-foreground data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:shadow-none"
+				>
+					{option.label}
+				</ToggleGroup.Item>
 			{/each}
 		</ToggleGroup.Root>
 	</div>
@@ -231,21 +237,26 @@
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>
-						<Table.Head>Question</Table.Head>
-						<Table.Head class="w-28">Recall now</Table.Head>
-						<Table.Head class="w-20">Next</Table.Head>
+						<Table.Head class="h-auto py-3 pl-5 text-xs text-muted-foreground">Question</Table.Head>
+						<Table.Head class="h-auto w-32 px-3 py-3 text-xs text-muted-foreground">Recall now</Table.Head>
+						<Table.Head class="h-auto w-24 py-3 pr-5 text-right text-xs text-muted-foreground">
+							Next
+						</Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
 					{#each visible as card (card.id)}
 						<Table.Row
 							onclick={() => select(card)}
-							class={cn(card.id === selectedId && 'bg-primary-soft hover:bg-primary-soft')}
+							class={cn(
+								'cursor-pointer',
+								card.id === selectedId && 'bg-primary-soft hover:bg-primary-soft'
+							)}
 						>
-							<Table.Cell class="max-w-md truncate font-serif text-base">
+							<Table.Cell class="max-w-md truncate py-3 pl-5 font-serif text-base">
 								{card.question}
 							</Table.Cell>
-							<Table.Cell>
+							<Table.Cell class="px-3 py-3">
 								{#if card.recall_percent !== null}
 									<div class="flex items-center gap-2">
 										<Progress value={card.recall_percent} max={100} class="h-1 flex-1" />
@@ -257,7 +268,7 @@
 									<span class="text-xs text-muted-foreground">New</span>
 								{/if}
 							</Table.Cell>
-							<Table.Cell class="font-mono text-xs text-muted-foreground">
+							<Table.Cell class="py-3 pr-5 text-right font-mono text-xs text-foreground-secondary">
 								{nextLabel(card)}
 							</Table.Cell>
 						</Table.Row>

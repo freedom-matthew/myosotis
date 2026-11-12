@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ToggleGroup as ToggleGroupPrimitive } from "bits-ui";
-	import { type ToggleVariants, toggleVariants } from "#lib/components/ui/toggle/index.js";
+	import type { ToggleVariants } from "#lib/components/ui/toggle/index.js";
 	import { cn } from "#lib/utils.js";
 	import { getToggleGroupCtx } from "./toggle-group.svelte";
 
@@ -23,11 +23,7 @@
 	data-size={ctx.size || size}
 	data-spacing={ctx.spacing}
 	class={cn(
-		"group-data-[spacing=0]/toggle-group:rounded-none group-data-[spacing=0]/toggle-group:px-2 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5 group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-lg group-data-vertical/toggle-group:data-[spacing=0]:first:rounded-t-lg group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-lg group-data-vertical/toggle-group:data-[spacing=0]:last:rounded-b-lg shrink-0 focus:z-10 focus-visible:z-10 group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:border-l-0 group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:border-t-0 group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-l group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-t",
-		toggleVariants({
-			variant: ctx.variant || variant,
-			size: ctx.size || size,
-		}),
+		"inline-flex shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium text-foreground-secondary outline-none transition-all hover:text-foreground focus:z-10 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-xs [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 		className
 	)}
 	{value}

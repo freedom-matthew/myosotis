@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { Check } from '@lucide/svelte';
 	import { KIND_LABELS } from '#lib/card-kind.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
@@ -95,6 +96,17 @@
 		await refresh();
 	}
 
+	/** Stopping means I'm done with this source for now, so go back to start another. */
+	async function stop(id: number): Promise<void> {
+		error = null;
+		try {
+			await stopImport(id);
+			await goto('/new');
+		} catch (reason) {
+			error = String(reason);
+		}
+	}
+
 	function startEditing(): void {
 		if (!focused) return;
 		editQuestion = focused.question;
@@ -176,7 +188,7 @@
 				<span class="text-sm text-muted-foreground">
 					Generating cards from “{item.title}”, part {item.parts_done + 1} of {item.parts_total}…
 				</span>
-				<Button variant="ghost" onclick={() => act(() => stopImport(item.id))}>Stop</Button>
+				<Button variant="ghost" onclick={() => stop(item.id)}>Stop</Button>
 			</div>
 			<Skeleton class="h-6 w-3/4" />
 			<Skeleton class="h-6 w-1/2" />
@@ -192,7 +204,7 @@
 			</div>
 			<div class="flex gap-2">
 				{#if current.status === 'generating'}
-					<Button variant="ghost" onclick={() => act(() => stopImport(current.id))}>Stop</Button>
+					<Button variant="ghost" onclick={() => stop(current.id)}>Stop</Button>
 				{/if}
 				<Button onclick={() => act(() => acceptAllDrafts(current.id))} class="gap-2">
 					Accept all remaining
@@ -225,7 +237,7 @@
 								<div class="flex gap-2">
 									<Button onclick={saveEdit} class="gap-2">
 										Save
-										<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">⌘↵</Kbd>
+										<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground"><span>⌘</span><span>↵</span></Kbd>
 									</Button>
 									<Button variant="ghost" onclick={() => (editing = false)}>Cancel</Button>
 								</div>
@@ -301,7 +313,7 @@
 								focusedIndex = index;
 								editing = false;
 							}}
-							class="rounded-xl border bg-card p-4 text-left transition-colors hover:border-input"
+							class="cursor-pointer rounded-xl border bg-card p-4 text-left transition-colors hover:border-input outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
 						>
 							{#if draft.kind !== 'question'}
 								<span class="text-xs text-muted-foreground">{KIND_LABELS[draft.kind]}</span>

@@ -117,11 +117,6 @@
 					<p class="text-base text-muted-foreground">
 						Start with something worth keeping: an article, a chapter, your notes.
 					</p>
-					<div class="mt-2.5">
-						<Button href="/new" class="h-auto rounded-xl px-5 py-3 text-base shadow-primary">
-							New source
-						</Button>
-					</div>
 				{/if}
 			{/if}
 		</section>

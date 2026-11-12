@@ -18,8 +18,8 @@
 	const FILE_EXTENSION: RegExp = /\.[^.]+$/;
 
 	const DEPTHS: DepthOption[] = [
-		{ value: 'essentials', label: 'Essentials', cards: 6 },
-		{ value: 'balanced', label: 'Balanced', cards: 14 },
+		{ value: 'essentials', label: 'Essentials', cards: 5 },
+		{ value: 'balanced', label: 'Balanced', cards: 15 },
 		{ value: 'thorough', label: 'Thorough', cards: 30 }
 	];
 
@@ -38,7 +38,7 @@
 	const words: number = $derived(text.trim() === '' ? 0 : text.trim().split(/\s+/).length);
 	const canGenerate: boolean = $derived(text.trim() !== '' && !starting);
 	const expected: number = $derived(
-		DEPTHS.find((option) => option.value === depth)?.cards ?? 14
+		DEPTHS.find((option) => option.value === depth)?.cards ?? 15
 	);
 
 	$effect(() => {
@@ -157,7 +157,7 @@
 				>
 					<FileUp size={20} strokeWidth={1.8} class="text-muted-foreground" />
 					<span class="text-base">{reading ? 'Reading…' : 'Drop a file here'}</span>
-					<span class="font-mono text-xs text-muted-foreground">.txt · .md · .pdf · .docx</span>
+					<span class="font-mono text-xs text-muted-foreground">.txt, .md, .pdf, .docx</span>
 					<span
 						class="rounded-lg border border-input bg-secondary px-3 py-2 text-sm text-secondary-foreground"
 					>
@@ -207,7 +207,7 @@
 					class="h-auto gap-3 rounded-xl px-5 py-3 shadow-primary"
 				>
 					Generate cards
-					<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground">⌘↵</Kbd>
+					<Kbd class="bg-primary-foreground/20 font-mono text-primary-foreground"><span>⌘</span><span>↵</span></Kbd>
 				</Button>
 				<span class="text-center text-xs text-muted-foreground">
 					Claude Opus · about {expected} cards

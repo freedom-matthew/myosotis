@@ -52,7 +52,7 @@
 
 	const navItem = (href: string): string =>
 		cn(
-			'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent',
+			'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
 			page.url.pathname === href
 				? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
 				: 'text-sidebar-foreground'
@@ -66,21 +66,21 @@
 		aria-label="Main"
 		class="flex w-54 shrink-0 flex-col gap-5 border-r bg-sidebar px-3.5 pt-10 pb-5"
 	>
-		<a href="/" class="px-2.5 font-serif text-2xl leading-none italic">myosotis</a>
+		<a href="/" class="rounded-md px-2.5 font-serif text-2xl leading-none italic outline-none focus-visible:ring-3 focus-visible:ring-ring/50">myosotis</a>
 		<a
 			href="/new"
-			class="flex items-center justify-between rounded-lg bg-sidebar-primary px-3 py-2 text-sm font-medium text-sidebar-primary-foreground"
+			class="flex items-center justify-between rounded-lg bg-sidebar-primary px-3 py-2 text-sm font-medium text-sidebar-primary-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
 		>
-			<span class="flex items-center gap-2"><Plus size={16} />New source</span>
-			<span class="font-mono text-xs opacity-70">⌘N</span>
+			<span class="flex items-center gap-2"><Plus size={16} />New</span>
+			<span class="inline-flex gap-1 font-mono text-xs opacity-70"><span>⌘</span><span>N</span></span>
 		</a>
 		<button
 			type="button"
 			onclick={() => (paletteOpen = true)}
-			class="-mt-3 flex items-center justify-between rounded-lg border border-input bg-secondary px-3 py-2 text-sm text-sidebar-foreground"
+			class="-mt-3 flex cursor-pointer items-center justify-between rounded-lg border border-input bg-secondary px-3 py-2 text-sm text-sidebar-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
 		>
 			<span class="flex items-center gap-2"><Search size={15} />Search</span>
-			<span class="font-mono text-xs text-muted-foreground">⌘K</span>
+			<span class="inline-flex gap-1 font-mono text-xs text-muted-foreground"><span>⌘</span><span>K</span></span>
 		</button>
 		<div class="flex flex-col gap-0.5">
 			<a href="/" class={navItem('/')}><Sun size={16} strokeWidth={1.8} />Today</a>

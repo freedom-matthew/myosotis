@@ -95,7 +95,7 @@ All tokens live in `theme.css`. Highlights:
 ## 4. App shell & navigation
 
 - **Window:** min 960×640. Native decorations on Windows/Linux; on macOS an overlay title bar with a 28px drag region (`data-tauri-drag-region`).
-- **Sidebar** (shadcn-svelte `Sidebar`), 216px, `bg-sidebar`, right border: wordmark → **New source** (`sidebar-primary`, `⌘N`) → **Search** (opens command palette, `⌘K`) → **Today**, **Inbox** (+ `primary-tint` count badge), **Library** → spacer → **Settings**. Item: `px-3 py-2 rounded-md text-sm`; active = `bg-sidebar-accent font-medium`.
+- **Sidebar** (shadcn-svelte `Sidebar`), 216px, `bg-sidebar`, right border: wordmark → **+ New** (`sidebar-primary`, `⌘ N`; opens New source) → **Search** (opens command palette, `⌘K`) → **Today**, **Inbox** (+ `primary-tint` count badge), **Library** → spacer → **Settings**. Item: `px-3 py-2 rounded-md text-sm`; active = `bg-sidebar-accent font-medium`.
 - **Command palette:** `Command` in `Dialog`, centred, 560px, `shadow-popover`. Groups: Actions, Cards, Imports. (Not drawn yet.)
 - **Review takes over the whole window** — no sidebar. Esc returns to where you came from.
 - **Narrow windows** (< 720px; future phone): sidebar collapses to an icon rail, later bottom tabs.
@@ -127,7 +127,7 @@ Import    id, title, full_text, status (generating|in_inbox|done), created_at
 ## 6. Screens
 
 ### Today — `screens/Today.dc.html`
-Date eyebrow → headline `text-5xl` "37 cards are due today." → "About 9 minutes · 28 reviews and 9 new" → **Start review** (primary, `Space`) + link "Only reviews, skip new". Tiles (auto-fit, min 200px): **Inbox**, **Next 7 days** (bars, today in `chart-1`), **Retention, 30 days**, **Keeps slipping** (focused session with Rewrite / Explain). **Recent imports** list (title, status such as "12 in Inbox" or "22 cards", relative date).
+Date eyebrow → headline `text-5xl` "37 cards are due today." → "About 9 minutes · 28 reviews and 9 new" → **Start review** (primary, `Space`) + link "Only reviews, skip new". When nothing is due and the collection is empty, just a line of text; no New source button (the sidebar has it). Tiles (auto-fit, min 200px): **Inbox**, **Next 7 days** (bars, today in `chart-1`), **Retention, 30 days**, **Keeps slipping** (focused session with Rewrite / Explain). **Recent imports** list (title, status such as "12 in Inbox" or "22 cards", relative date).
 States: nothing due → "Nothing due today." + next due time. No API key → quiet banner linking to Settings.
 
 ### Review — `screens/Review.dc.html` (the core loop)
@@ -139,7 +139,7 @@ States: nothing due → "Nothing due today." + next due time. No API key → qui
 - Done state: "That is everything for now." + next due summary + **Back to Today**.
 
 ### New source — `screens/Import.dc.html`
-Title + helper text; segmented **Paste text | Open file**. Left: Text textarea (serif 16, word count; label shows "· file name" after opening a file) or dashed drop zone. No title: nothing is named. Right panel: **How much to extract** (Essentials ~6 / Balanced ~14 / Thorough ~30), **Card types** (questions and concepts always; checkbox "Describe in your own words"), **Focus on** (optional), **Generate cards** (`⌘↵`) + "model · about N cards". Generating goes straight to the Inbox; cards stream in.
+Title + helper text; segmented **Paste text | Open file**. Left: Text textarea (serif 16, word count; label shows "· file name" after opening a file) or dashed drop zone. No title: nothing is named. Right panel: **How much to extract** (Essentials ~5 / Balanced ~15 / Thorough ~30), **Card types** (questions and concepts always; checkbox "Describe in your own words"), **Focus on** (optional), **Generate cards** (`⌘↵`) + "model · about N cards". Generating goes straight to the Inbox; cards stream in. **Stop** during generation returns to New source; cards made so far stay in the Inbox. File types are listed as ".txt, .md, .pdf, .docx".
 
 ### Inbox — `screens/Curate.dc.html`
 - Header: the import's automatic label, status line ("2 accepted · 3 to check · 1 possible duplicate · still generating…"), **Accept all remaining** (`⇧A`).
@@ -214,9 +214,12 @@ Sentence case. No exclamation marks, no "Oops". Short and specific ("Cards land 
 
 ## 11. Not designed yet — build from the tokens
 
-First run (welcome → AI provider and key → first source) · empty states (empty Inbox: "Nothing to check." only, empty Library, nothing due, Tidy up "All tidy.") · errors as inline `warn-soft` messages with Retry, never modal alerts · toasts (`Sonner`, bottom-centre: "Card deleted · Undo") · card edit dialog in Review · command palette · logo/app icon.
+First run (welcome → AI provider and key → first source) · empty states (empty Inbox: "Nothing to check." only, empty Library, nothing due, Tidy up "All tidy." — both centred, nothing else on the page) · errors as inline `warn-soft` messages with Retry, never modal alerts · toasts (`Sonner`, bottom-centre: "Card deleted · Undo") · card edit dialog in Review · command palette · logo/app icon.
 
 ## 12. Component mapping (shadcn-svelte)
+
+Conventions: everything clickable shows the pointer cursor and a visible focus ring. Segmented switches (ToggleGroup) are a tinted track (`bg-accent/70`, `p-1`, `rounded-lg`) with fully rounded items; the selected item is a white chip (`bg-card`, `shadow-xs`). Library filters are separate pills (`rounded-full`; selected = `bg-foreground`). Shortcut hints space their keys: "⌘ N", "⌘ ↵". Tables use 20px outer and 12px inner cell padding, 12px muted headers.
+
 
 `Sidebar` · `Button` (default = primary, secondary, outline, ghost) · `Input` · `Textarea` · `Select` · `Checkbox` · `Slider` · `Switch` · `ToggleGroup` (segmented controls) · `Table` · `Badge` · `Command` + `Dialog` · `Tooltip` · `Separator` · `Sonner` · `Skeleton` · `Progress`.
 

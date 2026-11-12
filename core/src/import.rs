@@ -19,8 +19,8 @@ pub enum Depth {
 impl Depth {
     pub fn target_cards(self) -> u32 {
         match self {
-            Depth::Essentials => 6,
-            Depth::Balanced => 14,
+            Depth::Essentials => 5,
+            Depth::Balanced => 15,
             Depth::Thorough => 30,
         }
     }
