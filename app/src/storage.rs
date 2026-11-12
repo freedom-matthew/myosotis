@@ -10,7 +10,11 @@ use myosotis_core::{
     ReviewRepo, Schedule, Settings, SettingsRepo, Size, StoredCard, Theme, TidyRepo,
 };
 use sqlx::SqlitePool;
+use sqlx::migrate::Migrator;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions, SqliteTransaction};
+
+/// The schema changes, embedded in the binary at compile time.
+static MIGRATOR: Migrator = sqlx::migrate!();
 
 /// `Clone` is cheap: the pool is shared, like a C# `HttpClient` passed around.
 #[derive(Clone)]
@@ -21,14 +25,48 @@ pub struct SqliteCardRepo {
 impl SqliteCardRepo {
     /// Opens (or creates) the database file and brings its schema up to date.
     pub async fn open(path: &Path) -> Result<Self, RepoError> {
+        let repo: Self = Self::connect(path).await?;
+        repo.upgrade().await?;
+        Ok(repo)
+    }
+
+    /// Opens (or creates) the database file as it is, without changing its schema.
+    pub async fn connect(path: &Path) -> Result<Self, RepoError> {
         let options: SqliteConnectOptions = SqliteConnectOptions::new()
             .filename(path)
             .create_if_missing(true);
         let pool: SqlitePool = SqlitePool::connect_with(options)
             .await
             .map_err(repo_error)?;
-        let repo: Self = Self::migrated(pool).await?;
-        repo.fail_interrupted_imports().await?;
+        Ok(Self { pool })
+    }
+
+    /// Whether this version of the app changes the schema of an existing collection.
+    /// A brand-new, empty database has nothing to protect, so it never needs it.
+    pub async fn needs_upgrade(&self) -> bool {
+        let latest: Option<i64> = MIGRATOR.iter().map(|migration| migration.version).max();
+        // Not checked at compile time: the table may not exist yet.
+        let applied: Option<i64> =
+            sqlx::query_scalar("SELECT max(version) FROM _sqlx_migrations WHERE success")
+                .fetch_one(&self.pool)
+                .await
+                .unwrap_or(None);
+        matches!((applied, latest), (Some(applied), Some(latest)) if applied < latest)
+    }
+
+    /// Brings the schema up to date and tidies up after the previous run.
+    pub async fn upgrade(&self) -> Result<(), RepoError> {
+        MIGRATOR.run(&self.pool).await.map_err(repo_error)?;
+        self.fail_interrupted_imports().await
+    }
+
+    /// A collection as an older version of the app left it. Meant for tests.
+    pub async fn open_at_version(path: &Path, version: i64) -> Result<Self, RepoError> {
+        let repo: Self = Self::connect(path).await?;
+        MIGRATOR
+            .run_to(version, &repo.pool)
+            .await
+            .map_err(repo_error)?;
         Ok(repo)
     }
 
@@ -62,7 +100,7 @@ impl SqliteCardRepo {
     }
 
     async fn migrated(pool: SqlitePool) -> Result<Self, RepoError> {
-        sqlx::migrate!().run(&pool).await.map_err(repo_error)?;
+        MIGRATOR.run(&pool).await.map_err(repo_error)?;
         Ok(Self { pool })
     }
 

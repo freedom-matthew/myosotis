@@ -39,6 +39,12 @@ Rules:
 - For now the LLM is called through the user's own installed Claude Code (`claude -p`, their Pro login), behind `CardGenerator`, `CardExplainer`, `CardRewriter` and `CardMarker`. Use the `opus` alias, so it's always the latest Opus. The app never reads or stores Claude credentials.
 - Don't add new dependencies without asking first.
 
+## My data
+I learn with the installed app daily, so my cards and review history must never be lost.
+- Migrations keep every card and review: convert, never drop. Test the SQL on a copy first.
+- On startup, the app backs up the collection before any migration changes it (`backup::open_collection`).
+- Development builds (`cargo tauri dev`) use their own data (`…/dev.myosotis/development`, `~/Documents/Myosotis (development)`). Never touch the real ones.
+
 ## Code style
 - Always annotate the type of every variable binding, even where it can be inferred (anonymous types, such as sqlx rows, are the only exception): `let cards: Vec<Card> = ...` in Rust, `const cards: Promise<Card[]> = ...` in TypeScript. I want to read types in the code, not rely on IDE hints.
 - Database tables have singular names (`card`, not `cards`). Applied migrations are never edited; a change goes in a new one.
@@ -89,6 +95,7 @@ Once I've approved acceptance tests, never change, delete or weaken them to make
 Run from the workspace root. `.env` points sqlx's compile-time checks at `dev.db` (gitignored).
 - `cargo test --workspace`: all Rust tests
 - `cargo tauri dev`: run the app in development
+- `scripts/install.sh`: test, build and install into /Applications (how every update reaches me)
 - `cargo tauri build --bundles app`: build `target/release/bundle/macos/Myosotis.app` (needs `ui/build`, which the build creates)
 - `cargo test -p myosotis-app --lib -- --ignored --nocapture`: tests against the real Claude Code; they use plan limits
 - `cargo sqlx migrate add --source app/migrations <name>` / `cargo sqlx migrate run --source app/migrations`: migrations

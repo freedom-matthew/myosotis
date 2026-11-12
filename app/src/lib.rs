@@ -17,18 +17,19 @@ use crate::storage::SqliteCardRepo;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            let data_dir: PathBuf = app.path().app_data_dir()?;
+            let data_dir: PathBuf = backup::data_dir(app.handle())?;
             std::fs::create_dir_all(&data_dir)?;
             let database: PathBuf = data_dir.join("myosotis.db");
+            let backups: PathBuf = backup::folder(app.handle())?.join("backups");
             backup::apply_staged_restore(&data_dir, &database)?;
-            let repo: SqliteCardRepo =
-                tauri::async_runtime::block_on(SqliteCardRepo::open(&database))?;
-            let folder: PathBuf = backup::folder(app.handle())?;
-            if let Err(error) = tauri::async_runtime::block_on(backup::daily_backup(
-                &repo,
-                &folder.join("backups"),
+            let repo: SqliteCardRepo = tauri::async_runtime::block_on(backup::open_collection(
+                &database,
+                &backups,
                 Utc::now(),
-            )) {
+            ))?;
+            if let Err(error) =
+                tauri::async_runtime::block_on(backup::daily_backup(&repo, &backups, Utc::now()))
+            {
                 eprintln!("daily backup failed: {error}");
             }
             match tauri::async_runtime::block_on(settings::load(&repo)) {

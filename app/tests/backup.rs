@@ -233,3 +233,63 @@ async fn a_backup_that_is_not_in_the_folder_cannot_be_restored() {
     assert!(!backup::apply_staged_restore(&home, &database).unwrap());
     fs::remove_dir_all(&home).unwrap();
 }
+
+/// A schema version from before an update, as an older app left the collection.
+const AN_OLDER_SCHEMA: i64 = 20261111000000;
+
+#[tokio::test]
+async fn my_collection_is_backed_up_before_an_update_changes_it() {
+    // given a collection left by an older version of the app
+    let home: PathBuf = empty_folder();
+    fs::create_dir_all(&home).unwrap();
+    let database: PathBuf = home.join("collection.sqlite");
+    let older: SqliteCardRepo = SqliteCardRepo::open_at_version(&database, AN_OLDER_SCHEMA)
+        .await
+        .unwrap();
+    drop(older);
+
+    // when the new version starts
+    let backups: PathBuf = home.join("backups");
+    let repo: SqliteCardRepo = backup::open_collection(&database, &backups, monday())
+        .await
+        .unwrap();
+
+    // then a backup was made before the update, and the collection works
+    assert_eq!(files_in(&backups), 1);
+    assert!(repo.list().await.unwrap().is_empty());
+    fs::remove_dir_all(&home).unwrap();
+}
+
+#[tokio::test]
+async fn starting_without_an_update_makes_no_extra_backup() {
+    // given a collection that is already up to date
+    let (repo, home): (SqliteCardRepo, PathBuf) = collection_on_disk(1).await;
+    drop(repo);
+
+    // when the app starts again
+    let backups: PathBuf = home.join("backups");
+    backup::open_collection(&home.join("collection.sqlite"), &backups, monday())
+        .await
+        .unwrap();
+
+    // then nothing was backed up for an update
+    assert!(!backups.exists());
+    fs::remove_dir_all(&home).unwrap();
+}
+
+#[tokio::test]
+async fn a_new_installation_makes_no_backup_of_its_empty_collection() {
+    // given no collection yet
+    let home: PathBuf = empty_folder();
+    fs::create_dir_all(&home).unwrap();
+
+    // when the app starts for the first time
+    let backups: PathBuf = home.join("backups");
+    backup::open_collection(&home.join("collection.sqlite"), &backups, monday())
+        .await
+        .unwrap();
+
+    // then there is nothing to protect, so no backup
+    assert!(!backups.exists());
+    fs::remove_dir_all(&home).unwrap();
+}

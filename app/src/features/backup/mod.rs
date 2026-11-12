@@ -27,9 +27,25 @@ fn file_error(error: impl Error + Send + Sync + 'static) -> RepoError {
     RepoError(Box::new(error))
 }
 
-/// `~/Documents/Myosotis`: a folder the user can see and copy.
+/// `~/Documents/Myosotis`: a folder the user can see and copy. Development builds use
+/// `Myosotis (development)`, so trying things out never touches the real backups.
 pub fn folder(app: &AppHandle) -> Result<PathBuf, tauri::Error> {
-    Ok(app.path().document_dir()?.join("Myosotis"))
+    let name: &str = if cfg!(debug_assertions) {
+        "Myosotis (development)"
+    } else {
+        "Myosotis"
+    };
+    Ok(app.path().document_dir()?.join(name))
+}
+
+/// Where the collection lives. Development builds keep a separate one.
+pub fn data_dir(app: &AppHandle) -> Result<PathBuf, tauri::Error> {
+    let data_dir: PathBuf = app.path().app_data_dir()?;
+    Ok(if cfg!(debug_assertions) {
+        data_dir.join("development")
+    } else {
+        data_dir
+    })
 }
 
 fn backup_name(now: DateTime<Utc>) -> String {
@@ -108,6 +124,21 @@ pub async fn daily_backup(
         back_up(repo, folder, now).await?;
     }
     Ok(())
+}
+
+/// Opens the collection at startup. When this version of the app changes the database, the
+/// collection is backed up first, so an update can never cost my cards.
+pub async fn open_collection(
+    database: &Path,
+    backups: &Path,
+    now: DateTime<Utc>,
+) -> Result<SqliteCardRepo, RepoError> {
+    let repo: SqliteCardRepo = SqliteCardRepo::connect(database).await?;
+    if repo.needs_upgrade().await {
+        back_up(&repo, backups, now).await?;
+    }
+    repo.upgrade().await?;
+    Ok(repo)
 }
 
 /// The backups in the folder, newest first, with how many cards each holds.
@@ -241,10 +272,7 @@ pub async fn restore_backup(
     let backups: PathBuf = folder(&app)
         .map_err(|error| error.to_string())?
         .join("backups");
-    let data_dir: PathBuf = app
-        .path()
-        .app_data_dir()
-        .map_err(|error| error.to_string())?;
+    let data_dir: PathBuf = data_dir(&app).map_err(|error| error.to_string())?;
     stage_restore(repo.inner(), &backups, &name, &data_dir, Utc::now())
         .await
         .map_err(|error| error.to_string())?;
